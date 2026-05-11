@@ -23,7 +23,7 @@ SecureMamba upgrades detection from **syntactic matching** to **functional seman
 ## Performance Highlights
 - **97.7%** accuracy on virulence sequences
 - **98.4%** on obfuscated variants
-- **86.5%** cross-species toxin detection
+- **82.1%** cross-species toxin detection
 - **0.14%** false-positive rate in DNA storage
 
 ---

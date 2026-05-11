@@ -131,7 +131,6 @@ Set `run_mode` in `config.py`:
 | `preprocess` | FASTA → segments |
 | `generate` | Generate semantic variants |
 | `train` | Train model (requires variants) |
-| `train-only` | Train from existing variants |
 | `all` | Full pipeline |
 
 

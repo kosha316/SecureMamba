@@ -134,13 +134,6 @@ Set `run_mode` in `config.py`:
 | `train-only` | Train from existing variants |
 | `all` | Full pipeline |
 
-### Low GPU Memory
-
-```python
-batch_size = 4
-max_seq_length = 2048
-use_amp = True
-```
 
 ---
 

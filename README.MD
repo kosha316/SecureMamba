@@ -1,7 +1,7 @@
 # SecureMamba
 **Robust Biosafety Screening via Functional Semantic Reconstruction**
 
-A dual-path Mamba-based framework that detects malicious biosequences **even after heavy obfuscation, fragmentation, and rearrangement**.
+A Dual-Path Mamba Block-based framework that detects malicious biosequences **even after heavy obfuscation, fragmentation, and rearrangement**.
 
 ---
 

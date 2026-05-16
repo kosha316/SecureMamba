@@ -8,6 +8,7 @@ A Dual-Path Mamba Block-based framework that detects malicious biosequences **ev
 ## Overview
 Traditional screening fails against AI-modified pathogens.  
 SecureMamba upgrades detection from **syntactic matching** to **functional semantic understanding** for synthetic biology & DNA storage safety.
+![image](image/model.png)
 
 ---
 

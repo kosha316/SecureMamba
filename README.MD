@@ -46,7 +46,7 @@ NT-V3 → Dual-Path Mamba Block → Contrastive Learning → Classifier
 ##  Visualization Analysis
 We can analyze the important regions identified by the model through gradient attribution analysis methods to gain deeper biological significance and model rationality.
 Simply run the `attribution_analysis.py` script to obtain visualization results. The specific steps are shown in the video below.
-
+https://github.com/user-attachments/assets/f2f97147-c2a0-448b-abbb-2d4e51a8c7a0
 
 ---
 

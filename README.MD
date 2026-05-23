@@ -76,7 +76,7 @@ pip install mamba-ssm
 
 #  SecureMamba Model Acquisition
 
-https://pan.baidu.com/s/1XMneBTYv2DjcqP_wfM4_Eg?pwd=SMV3  Extraction Code: SMV3
+https://pan.baidu.com/s/1XMneBTYv2DjcqP_wfM4_Eg?pwd=SMV3 
 
 # Install other dependencies
 pip install transformers biopython numpy pandas scikit-learn matplotlib seaborn tqdm

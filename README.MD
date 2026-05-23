@@ -41,6 +41,12 @@ NT-V3 → Dual-Path Mamba Block → Contrastive Learning → Classifier
 - High-throughput synthetic biology monitoring
 - Secure DNA data storage
 - Cross-species toxin & pathogen detection
+---
+
+##  Visualization Analysis
+We can analyze the important regions identified by the model through gradient attribution analysis methods to gain deeper biological significance and model rationality.
+Simply run the `attribution_analysis.py` script to obtain visualization results. The specific steps are shown in the video below.
+
 
 ---
 
@@ -195,6 +201,7 @@ python predict.py --fasta test.fasta --model results/best_model.pth --threshold 
 ├── synonymous_variants.py    # Variant generation
 ├── realtime_trainer.py       # Trainer
 ├── predict.py                # Prediction script
+├── attribution_analysis.py   # attribution_analysis script
 └── train_data/               # Training data
 ```
 

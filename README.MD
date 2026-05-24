@@ -82,7 +82,7 @@ pip install mamba-ssm
 
 #  SecureMamba Model Acquisition
 
-DOI: 10.5281/zenodo.20365512.
+DOI: [10.5281/zenodo.20365512.](https://zenodo.org/records/20365513)
 
 # Install other dependencies
 pip install transformers biopython numpy pandas scikit-learn matplotlib seaborn tqdm

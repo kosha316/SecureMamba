@@ -127,9 +127,9 @@ The training and testing datasets used in SecureMamba are publicly available on 
 |------|------|-------------|
 | `train_data_pos.fasta` | 52.8 MB | Positive training samples (toxic/virulent sequences) |
 | `train_data_neg.fasta` | 192.1 MB | Negative training samples (non-toxic/benign sequences) |
-| `btx_test.fasta` | 2.2 MB | Botulinum toxin (BoNT) test set |
+| `btx_test.fasta` | 2.2 MB | BTXPred test set |
 | `vfdb_test.fasta` | 16.9 MB | Virulence Factor Database (VFDB) test set |
-| `m5:6400afeb78bf775343f576b97ca4e66b` | 9.2 MB | Additional test data (MD5 hash as filename) |
+| `toxin_test.fasta` | 9.2 MB | ToxinPred test set |
 
 ### Download Datasets
 

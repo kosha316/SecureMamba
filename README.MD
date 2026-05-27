@@ -9,6 +9,28 @@ A Dual-Path Mamba Block-based framework that detects malicious biosequences **ev
 
 ---
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Key Features](#key-features)
+3. [Performance Highlights](#performance-highlights)
+4. [Architecture](#architecture)
+5. [Applications](#applications)
+6. [Visualization Analysis](#visualization-analysis)
+7. [Requirements](#requirements)
+8. [Data Availability](#data-availability)
+9. [Model Weights](#model-weights)
+10. [Installation](#installation)
+11. [Configuration](#configuration)
+12. [Running](#running)
+13. [Prediction](#prediction)
+14. [Output Files](#output-files)
+15. [Project Structure](#project-structure)
+16. [FAQ](#faq)
+17. [License](#license)
+
+---
+
 ## Overview
 
 Traditional screening fails against AI-modified pathogens.  
@@ -72,58 +94,73 @@ https://github.com/user-attachments/assets/f2f97147-c2a0-448b-abbb-2d4e51a8c7a0
 | PyTorch | 2.5.1+cu121 |
 | CUDA | 12.1 |
 
-### Actual Environment Packages
-
-| Package | Version | Build | Channel |
-|---------|---------|-------|---------|
-| python | 3.11.6 | hab00c5b_0_cpython | conda-forge |
-| torch | 2.5.1+cu121 | pypi_0 | pypi |
-| torchvision | 0.20.1+cu121 | pypi_0 | pypi |
-| torchaudio | 2.5.1+cu121 | pypi_0 | pypi |
-| mamba-ssm | 2.2.6.post3 | pypi_0 | pypi |
-| causal-conv1d | 1.5.3.post1 | pypi_0 | pypi |
-| transformers | 4.57.1 | pypi_0 | pypi |
-| biopython | 1.85 | py311h49ec1c0_2 | conda-forge |
-| numpy | 2.2.6 | py311h5d046bc_0 | conda-forge |
-| pandas | 2.3.2 | py311hed34c8f_0 | conda-forge |
-| scikit-learn | 1.7.1 | py311hc3e1efb_0 | conda-forge |
-| matplotlib | 3.9.1 | py311h38be061_1 | conda-forge |
-| seaborn | 0.13.2 | hd8ed1ab_3 | conda-forge |
-| tqdm | 4.67.1 | pyhd8ed1ab_1 | conda-forge |
-| scipy | 1.16.1 | py311h1e13796_1 | conda-forge |
-| requests | 2.32.5 | pyhd8ed1ab_0 | conda-forge |
-| pyyaml | 6.0.2 | py311h2dc5d0c_2 | conda-forge |
-| huggingface-hub | 0.36.0 | pypi_0 | pypi |
-| datasets | 4.4.1 | pypi_0 | pypi |
-| tokenizers | 0.22.1 | pypi_0 | pypi |
-| safetensors | 0.6.2 | pypi_0 | pypi |
-| accelerate | 1.11.0 | pypi_0 | pypi |
-| einops | 0.8.1 | pypi_0 | pypi |
-
-### CUDA Packages (conda-forge/nvidia)
-
-| Package | Version | Build | Channel |
-|---------|---------|-------|---------|
-| cuda-cudart | 11.8.89 | 0 | nvidia |
-| cuda-cupti | 11.8.87 | 0 | nvidia |
-| cuda-nvrtc | 11.8.89 | 0 | nvidia |
-| cuda-nvtx | 11.8.86 | 0 | nvidia |
-| libcublas | 11.11.3.6 | 0 | nvidia |
-| libcufft | 10.9.0.58 | 0 | nvidia |
-| libcurand | 10.3.10.19 | 0 | nvidia |
-| libcusolver | 11.4.1.48 | 0 | nvidia |
-| libcusparse | 11.7.5.86 | 0 | nvidia |
-
-### CUDA Packages (PyPI - cu12)
+### Core Dependencies
 
 | Package | Version |
 |---------|---------|
-| nvidia-cublas-cu12 | 12.1.3.1 |
-| nvidia-cuda-runtime-cu12 | 12.1.105 |
-| nvidia-cudnn-cu12 | 9.1.0.70 |
-| nvidia-cuda-nvrtc-cu12 | 12.1.105 |
-| nvidia-cusparse-cu12 | 12.1.0.106 |
-| nvidia-nvtx-cu12 | 12.1.105 |
+| torch | 2.5.1+cu121 |
+| torchvision | 0.20.1+cu121 |
+| torchaudio | 2.5.1+cu121 |
+| mamba-ssm | 2.2.6.post3 |
+| causal-conv1d | 1.5.3.post1 |
+| transformers | 4.57.1 |
+| biopython | 1.85 |
+| numpy | 2.2.6 |
+| pandas | 2.3.2 |
+| scikit-learn | 1.7.1 |
+| matplotlib | 3.9.1 |
+| seaborn | 0.13.2 |
+| tqdm | 4.67.1 |
+
+---
+
+## Data Availability
+
+The training and testing datasets used in SecureMamba are publicly available on Zenodo:
+
+- **Dataset DOI (version v1)**: [10.5281/zenodo.20374288](https://doi.org/10.5281/zenodo.20374288)
+- **Dataset DOI (all versions)**: [10.5281/zenodo.20374287](https://doi.org/10.5281/zenodo.20374287)
+
+### Dataset Files
+
+| File | Size | Description |
+|------|------|-------------|
+| `train_data_pos.fasta` | 52.8 MB | Positive training samples (toxic/virulent sequences) |
+| `train_data_neg.fasta` | 192.1 MB | Negative training samples (non-toxic/benign sequences) |
+| `btx_test.fasta` | 2.2 MB | Botulinum toxin (BoNT) test set |
+| `vfdb_test.fasta` | 16.9 MB | Virulence Factor Database (VFDB) test set |
+| `m5:6400afeb78bf775343f576b97ca4e66b` | 9.2 MB | Additional test data (MD5 hash as filename) |
+
+### Download Datasets
+
+```bash
+# Download using wget
+wget https://zenodo.org/record/20374288/files/train_data_pos.fasta
+wget https://zenodo.org/record/20374288/files/train_data_neg.fasta
+wget https://zenodo.org/record/20374288/files/btx_test.fasta
+wget https://zenodo.org/record/20374288/files/vfdb_test.fasta
+
+# Create data directory and move files
+mkdir -p train_data
+mv *.fasta train_data/
+```
+
+---
+
+## Model Weights
+
+The pre-trained SecureMamba model weights are available on Zenodo:
+
+- **Model DOI (version v1)**: [10.5281/zenodo.20365513](https://doi.org/10.5281/zenodo.20365513)
+
+### Download Model
+
+```bash
+# Download model weights from Zenodo
+wget https://zenodo.org/record/20365513/files/best_nucleotide_v3_mamba_model.pth
+```
+
+Place the downloaded model file in the project root directory or specify the path in prediction commands.
 
 ---
 
@@ -136,14 +173,11 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 # Install Mamba-SSM
 pip install mamba-ssm
 
-# SecureMamba Model Acquisition
-# https://doi.org/10.5281/zenodo.20365513
-
 # Install other dependencies
 pip install transformers biopython numpy pandas scikit-learn matplotlib seaborn tqdm
 ```
 
-> **Note**: The actual environment shows torch 2.5.1+cu121 installed. The `cu118` index above installs CUDA 11.8-compatible wheels. For CUDA 12.1 compatibility as shown in the environment, use:
+> **Note**: The environment shows torch 2.5.1+cu121. For CUDA 12.1 compatibility, use:
 > ```bash
 > pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
 > ```
@@ -181,11 +215,13 @@ run_mode = "all"  # preprocess, generate, train, all, train-only
 
 ### Prepare Data
 
-Place FASTA files in `train_data/`:
+Place downloaded FASTA files in `train_data/`:
 ```
 train_data/
-├── train_data_pos.fasta          # Positive samples
-└── train_data_neg.fasta          # Negative samples
+├── train_data_pos.fasta          # Positive samples (52.8 MB)
+├── train_data_neg.fasta          # Negative samples (192.1 MB)
+├── btx_test.fasta                # Botulinum toxin test set (2.2 MB)
+└── vfdb_test.fasta               # Virulence factor test set (16.9 MB)
 ```
 
 ### Run Training
@@ -224,10 +260,10 @@ python predict.py --fasta input.fasta --model best_model.pth --threshold 0.5
 | `--batch-size` | ❌ | Batch size (default: 8) |
 | `--output-dir` | ❌ | Output directory |
 
-### Example
+### Example with Downloaded Model
 
 ```bash
-python predict.py --fasta test.fasta --model results/best_model.pth --threshold 0.6
+python predict.py --fasta train_data/btx_test.fasta --model best_nucleotide_v3_mamba_model.pth --threshold 0.6 --output-dir ./results
 ```
 
 ---
@@ -263,7 +299,12 @@ python predict.py --fasta test.fasta --model results/best_model.pth --threshold 
 ├── realtime_trainer.py       # Trainer
 ├── predict.py                # Prediction script
 ├── attribution_analysis.py   # Attribution analysis script
-└── train_data/               # Training data
+├── best_nucleotide_v3_mamba_model.pth  # Model weights (download from Zenodo)
+└── train_data/               # Training data (download from Zenodo)
+    ├── train_data_pos.fasta
+    ├── train_data_neg.fasta
+    ├── btx_test.fasta
+    └── vfdb_test.fasta
 ```
 
 ---
@@ -279,7 +320,9 @@ python predict.py --fasta test.fasta --model results/best_model.pth --threshold 
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 ```
 
-**CUDA version mismatch?** The environment has both CUDA 11.8 (conda-forge/nvidia) and CUDA 12.1 (PyPI packages). PyTorch uses CUDA 12.1 runtime (`torch 2.5.1+cu121`). Ensure `nvidia-smi` shows driver supporting CUDA 12.1.
+**Where to download datasets?** Zenodo DOI: [10.5281/zenodo.20374288](https://doi.org/10.5281/zenodo.20374288)
+
+**Where to download model weights?** Zenodo DOI: [10.5281/zenodo.20365513](https://doi.org/10.5281/zenodo.20365513)
 
 ---
 
@@ -309,7 +352,29 @@ SOFTWARE.
 
 ---
 
-**Model DOI**: https://doi.org/10.5281/zenodo.20365513
+## Citation
+
+If you use SecureMamba in your research, please cite:
+
+```bibtex
+@software{SecureMamba2026,
+  author = {kosha316},
+  title = {SecureMamba: Robust Biosafety Screening via Functional Semantic Reconstruction},
+  year = {2026},
+  doi = {10.5281/zenodo.20365513},
+  url = {https://doi.org/10.5281/zenodo.20365513}
+}
+```
+
+**Datasets citation**:
+```bibtex
+@data{SecureMamba_Datasets_2026,
+  author = {kosha316},
+  title = {SecureMamba Training and Testing Datasets},
+  year = {2026},
+  doi = {10.5281/zenodo.20374288},
+  url = {https://doi.org/10.5281/zenodo.20374288}
+}
+```
 
 ---
-

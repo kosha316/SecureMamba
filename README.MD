@@ -238,9 +238,8 @@ Set `run_mode` in `config.py`:
 |------|-------------|
 | `preprocess` | FASTA → segments |
 | `generate` | Generate semantic variants |
-| `train` | Train model (requires variants) |
-| `all` | Full pipeline |
-| `train-only` | Train only |
+| `train` | Train model and validate(requires variants) |
+| `all` | Full pipeline (preprocess->generate->train->validate) |
 
 ---
 
@@ -304,6 +303,7 @@ python predict.py --fasta train_data/btx_test.fasta --model best_nucleotide_v3_m
     ├── train_data_pos.fasta
     ├── train_data_neg.fasta
     ├── btx_test.fasta
+    ├── toxin_test.fasta
     └── vfdb_test.fasta
 ```
 
@@ -356,25 +356,6 @@ SOFTWARE.
 
 If you use SecureMamba in your research, please cite:
 
-```bibtex
-@software{SecureMamba2026,
-  author = {kosha316},
-  title = {SecureMamba: Robust Biosafety Screening via Functional Semantic Reconstruction},
-  year = {2026},
-  doi = {10.5281/zenodo.20365513},
-  url = {https://doi.org/10.5281/zenodo.20365513}
-}
-```
-
-**Datasets citation**:
-```bibtex
-@data{SecureMamba_Datasets_2026,
-  author = {kosha316},
-  title = {SecureMamba Training and Testing Datasets},
-  year = {2026},
-  doi = {10.5281/zenodo.20374288},
-  url = {https://doi.org/10.5281/zenodo.20374288}
-}
 ```
 
 ---

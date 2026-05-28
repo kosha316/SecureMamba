@@ -587,7 +587,7 @@ python predict.py --fasta train_data/btx_test.fasta --model best_nucleotide_v3_m
 ├── utils.py                        # Utility functions
 ├── Model/
     ├── best_nucleotide_v3_mamba_model.pth  # Model weights (download from Zenodo)
-    ├── NT-V3_Pre_8M                         #  NT-V3 Pre-train weights (download from Zenodo)
+    └── NT-V3_Pre_8M                         #  NT-V3 Pre-train weights (download from Zenodo)
 └── train_data/               # Training data (download from Zenodo)
     ├── train_data_pos.fasta
     ├── train_data_neg.fasta

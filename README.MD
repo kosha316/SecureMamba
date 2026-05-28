@@ -573,15 +573,21 @@ python predict.py --fasta train_data/btx_test.fasta --model best_nucleotide_v3_m
 ## Project Structure
 
 ```
-├── config.py                 # Configuration
-├── main.py                   # Entry point
-├── model.py                  # NTv3 + Mamba model
-├── data_preprocessing.py     # Data preprocessing
-├── synonymous_variants.py    # Variant generation
-├── realtime_trainer.py       # Trainer
-├── predict.py                # Prediction script
-├── attribution_analysis.py   # Attribution analysis script
-├── best_nucleotide_v3_mamba_model.pth  # Model weights (download from Zenodo)
+├── config.py                       # Configuration parameters
+├── main.py                         # Main training and validate entry point
+├── predict.py                      # Predict script
+├── model.py                        # NT-V3 + Dual-Path Mamba model definition
+├── nucleotide_v3_trainable.py      # Trainable NT-V3 backbone wrapper
+├── data_preprocessing.py           # FASTA loading and sequence segmentation
+├── synonymous_variants.py          # Semantic variant generation
+├── realtime_dataset.py             # Real-time dataset loading and batching
+├── realtime_trainer.py             # Training loop and checkpointing
+├── loss.py                         # Loss functions (contrastive + classification)
+├── attribution_analysis.py         # Gradient attribution visualization
+├── utils.py                        # Utility functions
+├── Model/
+    ├── best_nucleotide_v3_mamba_model.pth  # Model weights (download from Zenodo)
+    ├── NT-V3_Pre_8M                         #  NT-V3 Pre-train weights (download from Zenodo)
 └── train_data/               # Training data (download from Zenodo)
     ├── train_data_pos.fasta
     ├── train_data_neg.fasta

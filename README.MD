@@ -164,25 +164,6 @@ Place the downloaded model file in the project root directory or specify the pat
 
 ---
 
-## Installation
-
-```bash
-# Install PyTorch with CUDA 11.8 support
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Install Mamba-SSM
-pip install mamba-ssm
-
-# Install other dependencies
-pip install transformers biopython numpy pandas scikit-learn matplotlib seaborn tqdm
-```
-
-> **Note**: The environment shows torch 2.5.1+cu121. For CUDA 12.1 compatibility, use:
-> ```bash
-> pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
-> ```
-
----
 
 ## Configuration
 

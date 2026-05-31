@@ -1,6 +1,6 @@
 """
-Nucleotide Transformer v3 + Mamba训练器
-完全可训练的NTv3模型
+Nucleotide Transformer v3 + Mamba Trainer
+Fully trainable NTv3 model
 """
 
 import torch
@@ -14,7 +14,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-# 导入自定义模块
+# Import custom modules
 from config import config
 from model import create_nucleotide_mamba_model
 from loss import TripletContrastiveLoss, HardTripletLoss
@@ -24,63 +24,63 @@ from realtime_dataset import create_nucleotide_dataloader
 
 
 class NucleotideMambaTrainer:
-    """Nucleotide Transformer v3 + Mamba训练器"""
+    """Nucleotide Transformer v3 + Mamba Trainer"""
     
     def __init__(self, config):
         self.config = config
         self.device = torch.device(config.device)
         
-        # 创建输出目录
+        # Create output directory
         os.makedirs(config.output_dir, exist_ok=True)
         
-        print(f"🚀 初始化完全可训练的Nucleotide Transformer v3 + Mamba训练器")
-        print(f"  设备: {self.device}")
-        print(f"  输出目录: {config.output_dir}")
-        print(f"  批次大小: {config.batch_size} ⚠️ (NTv3内存需求大)")
-        print(f"  使用Nucleotide Transformer v3: {getattr(config, 'use_nucleotide_transformer', False)}")
+        print(f"🚀 Initializing fully trainable Nucleotide Transformer v3 + Mamba Trainer")
+        print(f"  Device: {self.device}")
+        print(f"  Output directory: {config.output_dir}")
+        print(f"  Batch size: {config.batch_size} ⚠️ (NTv3 requires large memory)")
+        print(f"  Using Nucleotide Transformer v3: {getattr(config, 'use_nucleotide_transformer', False)}")
     
     def prepare_data(self, variants_data):
-        """准备数据 - 使用Nucleotide Transformer v3"""
-        print(f"\n📊 准备Nucleotide Transformer v3训练数据...")
+        """Prepare data - Using Nucleotide Transformer v3"""
+        print(f"\n📊 Preparing Nucleotide Transformer v3 training data...")
         
-        # 计算最大序列长度（DNA碱基数量）
+        # Calculate maximum sequence length (number of DNA bases)
         max_seq_len = getattr(self.config, 'max_seq_len', 512)
         
-        # 检查数据
+        # Check data
         if not variants_data:
-            raise ValueError("没有提供变体数据")
+            raise ValueError("No variant data provided")
         
-        print(f"  总样本数: {len(variants_data):,}")
+        print(f"  Total samples: {len(variants_data):,}")
         
-        # 分离正负样本用于分层抽样
+        # Separate positive and negative samples for stratified sampling
         labels = []
         for item in variants_data:
             labels.append(item.get('original_label', 0.0))
         
-        # 划分训练/验证集
+        # Split training/validation sets
         train_indices, val_indices = train_test_split(
             list(range(len(variants_data))),
-            test_size=0.2,  # 20%验证集
+            test_size=0.2,  # 20% validation set
             random_state=42,
             stratify=labels
         )
         
-        # 创建子集
+        # Create subsets
         train_data = [variants_data[i] for i in train_indices]
         val_data = [variants_data[i] for i in val_indices]
         
-        print(f"📊 数据划分:")
-        print(f"  训练集: {len(train_data):,} 个样本")
-        print(f"  验证集: {len(val_data):,} 个样本")
+        print(f"📊 Data split:")
+        print(f"  Training set: {len(train_data):,} samples")
+        print(f"  Validation set: {len(val_data):,} samples")
         
-        # 创建数据加载器
+        # Create data loaders
         train_loader = create_nucleotide_dataloader(
             segments=train_data,
             batch_size=self.config.batch_size,
             max_seq_len=max_seq_len,
             shuffle=True,
             num_workers=min(4, os.cpu_count()),
-            use_cache=config.use_caching  # 实时处理
+            use_cache=config.use_caching  # Real-time processing
         )
         
         val_loader = create_nucleotide_dataloader(
@@ -89,16 +89,16 @@ class NucleotideMambaTrainer:
             max_seq_len=max_seq_len,
             shuffle=False,
             num_workers=min(4, os.cpu_count()),
-            use_cache=config.use_caching  # 实时处理
+            use_cache=config.use_caching  # Real-time processing
         )
         
         return train_loader, val_loader
     
     def create_model(self):
-        """创建完全可训练的Nucleotide Transformer v3 + Mamba模型"""
-        print(f"\n🧠 创建完全可训练的Nucleotide Transformer v3 + Mamba模型...")
+        """Create fully trainable Nucleotide Transformer v3 + Mamba model"""
+        print(f"\n🧠 Creating fully trainable Nucleotide Transformer v3 + Mamba model...")
         
-        # 从config获取模型参数
+        # Get model parameters from config
         model_kwargs = {
             'transformer_model_repo': getattr(self.config, 'transformer_model_repo', 'InstaDeepAI/NTv3_8M_pre'),
             'embedding_dim': getattr(self.config, 'embedding_dim', 256),
@@ -112,7 +112,7 @@ class NucleotideMambaTrainer:
             'use_path_selection': getattr(self.config, 'use_path_selection', True),
             'path_selection_weight': getattr(self.config, 'path_selection_weight', 0.1),
             'max_seq_len': getattr(self.config, 'max_seq_len', 512),
-            'freeze_transformer': getattr(self.config, 'freeze_transformer', True),  # 完全可训练
+            'freeze_transformer': getattr(self.config, 'freeze_transformer', True),  # Fully trainable
             'use_caching': getattr(self.config, 'use_caching', True),
             'trust_remote_code': getattr(self.config, 'trust_remote_code', True),
             'use_local_global_attn': getattr(self.config, 'use_local_global_attn', True),
@@ -127,26 +127,26 @@ class NucleotideMambaTrainer:
         
         model = create_nucleotide_mamba_model(**model_kwargs)
         
-        # 打印模型统计
+        # Print model statistics
         model_summary = model.get_model_summary()
-        print(f"✅ 模型创建完成")
-        print(f"  总参数: {model_summary['total_parameters']:,}")
-        print(f"  可训练参数: {model_summary['trainable_parameters']:,} ⚠️ (完全可训练)")
-        print(f"  NTv3参数: {model_summary['ntv3_parameters']:,}")
-        print(f"  NTv3可训练: {model_summary['ntv3_trainable']:,}")
-        print(f"  Mamba参数: {model_summary['mamba_parameters']:,}")
-        print(f"  参数大小: {model_summary['parameter_mb']:.2f} MB")
-        print(f"  模型维度: {model_summary['d_model']}")
-        print(f"  模型架构: {model_summary['model_architecture']}")
+        print(f"✅ Model created successfully")
+        print(f"  Total parameters: {model_summary['total_parameters']:,}")
+        print(f"  Trainable parameters: {model_summary['trainable_parameters']:,} ⚠️ (fully trainable)")
+        print(f"  NTv3 parameters: {model_summary['ntv3_parameters']:,}")
+        print(f"  NTv3 trainable: {model_summary['ntv3_trainable']:,}")
+        print(f"  Mamba parameters: {model_summary['mamba_parameters']:,}")
+        print(f"  Parameter size: {model_summary['parameter_mb']:.2f} MB")
+        print(f"  Model dimension: {model_summary['d_model']}")
+        print(f"  Model architecture: {model_summary['model_architecture']}")
         
         return model
     
     def create_loss_functions(self):
-        """创建损失函数"""
-        # 分类损失
+        """Create loss functions"""
+        # Classification loss
         class_criterion = nn.BCEWithLogitsLoss()
         
-        # 对比损失
+        # Contrastive loss
         if getattr(self.config, 'use_hard_triplet', False):
             contrastive_criterion = HardTripletLoss(margin=getattr(self.config, 'triplet_margin', 1.0))
         else:
@@ -158,35 +158,35 @@ class NucleotideMambaTrainer:
         return class_criterion, contrastive_criterion
     
     def create_optimizer(self, model):
-        """创建优化器 - NTv3完全可训练，需要优化所有参数"""
-        # 分离NTv3参数和其他参数，可以设置不同的学习率
+        """Create optimizer - NTv3 fully trainable, need to optimize all parameters"""
+        # Separate NTv3 parameters from others, can set different learning rates
         ntv3_params = []
         other_params = []
         
         for name, param in model.named_parameters():
             if param.requires_grad:
                 if 'nucleotide_embedding' in name and 'model' in name:
-                    # NTv3模型参数 - 使用更小的学习率
+                    # NTv3 model parameters - use smaller learning rate
                     ntv3_params.append(param)
                 else:
-                    # 其他参数（Mamba、分类头等）
+                    # Other parameters (Mamba, classification head, etc.)
                     other_params.append(param)
         
         if not ntv3_params and not other_params:
-            raise ValueError("没有可训练的参数！请检查模型配置。")
+            raise ValueError("No trainable parameters! Please check model configuration.")
         
-        # 为不同参数组设置不同的学习率
+        # Set different learning rates for different parameter groups
         optimizer_grouped_parameters = []
         
-        # NTv3参数：较小的学习率
+        # NTv3 parameters: smaller learning rate
         if ntv3_params:
             optimizer_grouped_parameters.append({
                 "params": ntv3_params,
-                "lr": self.config.learning_rate * self.config.ntv3_learning_rate_multiplier,  # 10%的基础学习率
+                "lr": self.config.learning_rate * self.config.ntv3_learning_rate_multiplier,  # 10% of base learning rate
                 "weight_decay": self.config.weight_decay,
             })
         
-        # 其他参数：正常学习率
+        # Other parameters: normal learning rate
         if other_params:
             optimizer_grouped_parameters.append({
                 "params": other_params,
@@ -194,9 +194,9 @@ class NucleotideMambaTrainer:
                 "weight_decay": self.config.weight_decay,
             })
         
-        print(f"  优化器参数组:")
-        print(f"    NTv3参数: {len(ntv3_params)} 组，学习率: {self.config.learning_rate * config.ntv3_learning_rate_multiplier}")
-        print(f"    其他参数: {len(other_params)} 组，学习率: {self.config.learning_rate}")
+        print(f"  Optimizer parameter groups:")
+        print(f"    NTv3 parameters: {len(ntv3_params)} groups, learning rate: {self.config.learning_rate * config.ntv3_learning_rate_multiplier}")
+        print(f"    Other parameters: {len(other_params)} groups, learning rate: {self.config.learning_rate}")
         
         optimizer = optim.AdamW(
             optimizer_grouped_parameters,
@@ -204,7 +204,7 @@ class NucleotideMambaTrainer:
             eps=1e-8
         )
         
-        # 学习率调度器
+        # Learning rate scheduler
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer,
             max_lr=self.config.onecycle_max_lr,
@@ -216,9 +216,9 @@ class NucleotideMambaTrainer:
         
         return optimizer, scheduler
     
-    # 以下方法保持不变...
+    # The following methods remain unchanged...
     def calculate_metrics(self, labels, predictions, probabilities):
-        """计算评估指标"""
+        """Calculate evaluation metrics"""
         if len(labels) == 0:
             return {
                 'acc': 0.0,
@@ -268,7 +268,7 @@ class NucleotideMambaTrainer:
             }
             
         except Exception as e:
-            print(f"❌ 计算指标失败: {str(e)}")
+            print(f"❌ Failed to calculate metrics: {str(e)}")
             return {
                 'acc': 0.0,
                 'f1': 0.0,
@@ -279,7 +279,7 @@ class NucleotideMambaTrainer:
 
     def train_epoch(self, model, train_loader, class_criterion, contrastive_criterion, 
                     optimizer, scheduler, scaler, epoch):
-        """训练一个epoch"""
+        """Train one epoch"""
         model.train()
         
         epoch_loss = 0.0
@@ -287,7 +287,7 @@ class NucleotideMambaTrainer:
         epoch_contrastive_loss = 0.0
         epoch_path_loss = 0.0
         
-        # 指标收集
+        # Metric collection
         all_labels = []
         all_predictions = []
         all_probabilities = []
@@ -304,14 +304,14 @@ class NucleotideMambaTrainer:
         confusion_predictions = []
         confusion_probabilities = []
         
-        # 训练前清理GPU缓存
+        # Clean GPU cache before training
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         
-        # 使用tqdm显示进度
+        # Use tqdm to show progress
         with tqdm(train_loader, desc=f"Epoch {epoch+1}/{self.config.num_epochs}") as pbar:
             for batch_idx, batch in enumerate(pbar):
-                # 移动到设备
+                # Move to device
                 batch = self._move_batch_to_device(batch)
                 
                 batch_labels = batch['labels']
@@ -319,15 +319,15 @@ class NucleotideMambaTrainer:
                 positive_mask = (batch_labels == 1)
                 positive_indices = torch.where(positive_mask)[0]
                 
-                # 准备模型输入
+                # Prepare model inputs
                 original_sequences = batch['sequences']
                 semantic_sequences = batch.get('semantic_sequences', None)
                 confusion_sequences = batch.get('confusion_sequences', None)
                 random_mutation_sequences = batch.get('random_mutation_sequences', None)
                 
-                # 混合精度训练
+                # Mixed precision training
                 with autocast(device_type='cuda', enabled=True):
-                    # 前向传播
+                    # Forward pass
                     outputs = model(
                         original_sequences=original_sequences,
                         labels=batch['labels'],
@@ -337,10 +337,10 @@ class NucleotideMambaTrainer:
                         training_mode=True
                     )
                     
-                    # 解包输出
+                    # Unpack outputs
                     orig_class_pred, semantic_class_pred, confusion_class_pred, total_aux_loss, orig_contrastive_feat, all_contrastive_feat = outputs
                     
-                    # ===== 计算分类损失 =====
+                    # ===== Calculate classification loss =====
                     if orig_class_pred.dim() == 2 and orig_class_pred.size(1) == 1:
                         orig_class_pred_flat = orig_class_pred.squeeze(1)
                     else:
@@ -349,7 +349,7 @@ class NucleotideMambaTrainer:
                     orig_class_loss = class_criterion(orig_class_pred_flat, batch['labels'])
                     total_class_loss = orig_class_loss * 0.8
                     
-                    # 变体分类损失：只对正样本计算
+                    # Variant classification loss: only calculate for positive samples
                     if semantic_class_pred is not None and len(positive_indices) > 0:
                         semantic_class_pred_positive = semantic_class_pred[positive_indices]
                         semantic_labels_positive = torch.ones_like(batch['labels'][positive_indices])
@@ -378,7 +378,7 @@ class NucleotideMambaTrainer:
                             )
                             total_class_loss += confusion_class_loss * 0.1
                     
-                    # ===== 计算对比损失 =====
+                    # ===== Calculate contrastive loss =====
                     contrastive_loss = torch.tensor(0.0, device=self.device)
                     
                     if (orig_contrastive_feat is not None and 
@@ -419,14 +419,14 @@ class NucleotideMambaTrainer:
                                             negative_feat=random_mutation_contrastive_feat_positive.clone()
                                         )
                     
-                    # ===== 总损失 =====
+                    # ===== Total loss =====
                     total_loss = (total_class_loss + contrastive_loss * 0.3 + total_aux_loss * 0.1) / 1.4
                 
-                # 反向传播
+                # Backward pass
                 optimizer.zero_grad(set_to_none=True)
                 scaler.scale(total_loss).backward()
                 
-                # 梯度裁剪
+                # Gradient clipping
                 if self.config.grad_clip > 0:
                     scaler.unscale_(optimizer)
                     torch.nn.utils.clip_grad_norm_(model.parameters(), self.config.grad_clip)
@@ -435,7 +435,7 @@ class NucleotideMambaTrainer:
                 scaler.update()
                 scheduler.step()
                 
-                # 累计损失
+                # Accumulate losses
                 batch_size_actual = batch['labels'].size(0)
                 epoch_loss += total_loss.item() * batch_size_actual
                 epoch_class_loss += total_class_loss.item() * batch_size_actual
@@ -446,28 +446,28 @@ class NucleotideMambaTrainer:
                 else:
                     epoch_path_loss += total_aux_loss * batch_size_actual
                 
-                # 指标收集
+                # Metric collection
                 batch_labels_cpu = batch['labels'].cpu().detach().numpy()
                 pos_indices_np = positive_indices.cpu().numpy() if len(positive_indices) > 0 else np.array([])
                 
-                # 1. 原始序列预测
+                # 1. Original sequence predictions
                 orig_probs = torch.sigmoid(orig_class_pred).cpu().detach().numpy()
                 if orig_probs.ndim == 2 and orig_probs.shape[1] == 1:
                     orig_probs = orig_probs.flatten()
                 
                 orig_preds = (orig_probs > 0.5).astype(int)
                 
-                # 收集原始序列指标
+                # Collect original sequence metrics
                 original_labels.extend(batch_labels_cpu.tolist())
                 original_predictions.extend(orig_preds.tolist())
                 original_probabilities.extend(orig_probs.tolist())
                 
-                # 2. 总体指标
+                # 2. Overall metrics
                 all_labels.extend(batch_labels_cpu.tolist())
                 all_predictions.extend(orig_preds.tolist())
                 all_probabilities.extend(orig_probs.tolist())
                 
-                # 3. 变体指标（只对正样本）
+                # 3. Variant metrics (only for positive samples)
                 if len(positive_indices) > 0:
                     if semantic_class_pred is not None:
                         semantic_probs = torch.sigmoid(semantic_class_pred[positive_indices]).cpu().detach().numpy()
@@ -501,7 +501,7 @@ class NucleotideMambaTrainer:
                         confusion_predictions.extend(confusion_preds.tolist())
                         confusion_probabilities.extend(confusion_probs.tolist())
                 
-                # 更新进度条
+                # Update progress bar
                 pbar.set_postfix({
                     'loss': total_loss.item(),
                     'class': total_class_loss.item(),
@@ -510,24 +510,24 @@ class NucleotideMambaTrainer:
                     'pos': len(positive_indices)
                 })
                 
-                # 定期清理缓存
+                # Periodically clean cache
                 if batch_idx % 20 == 0 and torch.cuda.is_available():
                     torch.cuda.empty_cache()
             
-            # 计算epoch指标
+            # Calculate epoch metrics
             epoch_samples = len(train_loader.dataset)
             avg_loss = epoch_loss / epoch_samples if epoch_samples > 0 else 0
             avg_class_loss = epoch_class_loss / epoch_samples if epoch_samples > 0 else 0
             avg_contrastive_loss = epoch_contrastive_loss / epoch_samples if epoch_samples > 0 else 0
             avg_path_loss = epoch_path_loss / epoch_samples if epoch_samples > 0 else 0
             
-            # 计算各项指标
+            # Calculate various metrics
             overall_metrics = self.calculate_metrics(all_labels, all_predictions, all_probabilities)
             original_metrics = self.calculate_metrics(original_labels, original_predictions, original_probabilities)
             semantic_metrics = self.calculate_metrics(semantic_labels, semantic_predictions, semantic_probabilities)
             confusion_metrics = self.calculate_metrics(confusion_labels, confusion_predictions, confusion_probabilities)
             
-            # 计算综合指标
+            # Calculate combined metric
             variant_weight = getattr(self.config, 'variant_acc_weight', 0.7)
             combined_acc = original_metrics['acc'] * (1 - variant_weight) + \
                         (semantic_metrics['acc'] + confusion_metrics['acc']) / 2 * variant_weight
@@ -546,7 +546,7 @@ class NucleotideMambaTrainer:
             }
 
     def validate(self, model, val_loader, class_criterion, contrastive_criterion):
-        """验证模型"""
+        """Validate model"""
         model.eval()
         
         val_loss = 0.0
@@ -554,7 +554,7 @@ class NucleotideMambaTrainer:
         val_contrastive_loss = 0.0
         val_path_loss = 0.0
         
-        # 分别存储不同的指标集合
+        # Separate storage for different metric sets
         all_labels = []
         all_predictions = []
         all_probabilities = []
@@ -571,13 +571,13 @@ class NucleotideMambaTrainer:
         confusion_predictions = []
         confusion_probabilities = []
         
-        # 验证前清理GPU缓存
+        # Clean GPU cache before validation
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_loader):
-                # 修复标签格式
+                # Fix label format
                 if 'labels' in batch:
                     labels = batch['labels']
                     if isinstance(labels, torch.Tensor):
@@ -597,13 +597,13 @@ class NucleotideMambaTrainer:
                 positive_mask = (batch_labels == 1)
                 positive_indices = torch.where(positive_mask)[0]
                 
-                # 准备模型输入
+                # Prepare model inputs
                 original_sequences = batch['sequences']
                 semantic_sequences = batch.get('semantic_sequences', None)
                 confusion_sequences = batch.get('confusion_sequences', None)
                 random_mutation_sequences = batch.get('random_mutation_sequences', None)
                 
-                # 前向传播
+                # Forward pass
                 outputs = model(
                     original_sequences=original_sequences,
                     labels=batch['labels'],
@@ -615,7 +615,7 @@ class NucleotideMambaTrainer:
                 
                 orig_class_pred, semantic_class_pred, confusion_class_pred, total_aux_loss, orig_contrastive_feat, all_contrastive_feat = outputs
                 
-                # ===== 计算损失 =====
+                # ===== Calculate loss =====
                 if orig_class_pred.dim() == 2 and orig_class_pred.size(1) == 1:
                     orig_class_pred_flat = orig_class_pred.squeeze(1)
                 else:
@@ -624,7 +624,7 @@ class NucleotideMambaTrainer:
                 orig_class_loss = class_criterion(orig_class_pred_flat, batch['labels'])
                 total_class_loss = orig_class_loss * 0.8
                 
-                # 语义变体损失（只对正样本）
+                # Semantic variant loss (only for positive samples)
                 if semantic_class_pred is not None and len(positive_indices) > 0:
                     semantic_class_pred_positive = semantic_class_pred[positive_indices]
                     semantic_labels_positive = batch['labels'][positive_indices]
@@ -638,7 +638,7 @@ class NucleotideMambaTrainer:
                     )
                     total_class_loss += semantic_class_loss * 0.1
                 
-                # 混淆变体损失（只对正样本）
+                # Confusion variant loss (only for positive samples)
                 if confusion_class_pred is not None and len(positive_indices) > 0:
                     confusion_class_pred_positive = confusion_class_pred[positive_indices]
                     confusion_labels_positive = batch['labels'][positive_indices]
@@ -652,7 +652,7 @@ class NucleotideMambaTrainer:
                     )
                     total_class_loss += confusion_class_loss * 0.1
                 
-                # 对比损失
+                # Contrastive loss
                 contrastive_loss = torch.tensor(0.0, device=self.device)
                 
                 if len(positive_indices) > 0:
@@ -685,18 +685,18 @@ class NucleotideMambaTrainer:
                 
                 total_loss = (total_class_loss * 1.0 + contrastive_loss * 0.3 + total_aux_loss * 0.1) / 1.4
                 
-                # 累计损失
+                # Accumulate losses
                 batch_size_val = batch['labels'].size(0)
                 val_loss += total_loss.item() * batch_size_val
                 val_class_loss += total_class_loss.item() * batch_size_val
                 val_contrastive_loss += contrastive_loss.item() * batch_size_val
                 val_path_loss += total_aux_loss.item() * batch_size_val
                 
-                # ===== 指标收集 =====
+                # ===== Metric collection =====
                 batch_labels_cpu = batch['labels'].cpu().detach().numpy()
                 pos_indices_np = positive_indices.cpu().numpy() if len(positive_indices) > 0 else np.array([])
                 
-                # 1. 原始序列指标
+                # 1. Original sequence metrics
                 orig_probs = torch.sigmoid(orig_class_pred).cpu().detach().numpy()
                 if orig_probs.ndim == 2 and orig_probs.shape[1] == 1:
                     orig_probs = orig_probs.flatten()
@@ -707,12 +707,12 @@ class NucleotideMambaTrainer:
                 original_predictions.extend(orig_preds.tolist())
                 original_probabilities.extend(orig_probs.tolist())
                 
-                # 2. 总体指标
+                # 2. Overall metrics
                 all_labels.extend(batch_labels_cpu.tolist())
                 all_predictions.extend(orig_preds.tolist())
                 all_probabilities.extend(orig_probs.tolist())
                 
-                # 3. 变体指标（只对正样本）
+                # 3. Variant metrics (only for positive samples)
                 if len(positive_indices) > 0:
                     if semantic_class_pred is not None:
                         semantic_probs = torch.sigmoid(semantic_class_pred[positive_indices]).cpu().detach().numpy()
@@ -746,27 +746,27 @@ class NucleotideMambaTrainer:
                         confusion_predictions.extend(confusion_preds.tolist())
                         confusion_probabilities.extend(confusion_probs.tolist())
         
-        # ===== 计算验证指标 =====
+        # ===== Calculate validation metrics =====
         val_samples = sum(1 for _ in val_loader) * self.config.batch_size if len(val_loader) > 0 else 0
         avg_loss = val_loss / val_samples if val_samples > 0 else 0
         avg_class_loss = val_class_loss / val_samples if val_samples > 0 else 0
         avg_contrastive_loss = val_contrastive_loss / val_samples if val_samples > 0 else 0
         avg_path_loss = val_path_loss / val_samples if val_samples > 0 else 0
         
-        # 计算各项指标
+        # Calculate various metrics
         overall_metrics = self.calculate_metrics(all_labels, all_predictions, all_probabilities)
         original_metrics = self.calculate_metrics(original_labels, original_predictions, original_probabilities)
         semantic_metrics = self.calculate_metrics(semantic_labels, semantic_predictions, semantic_probabilities)
         confusion_metrics = self.calculate_metrics(confusion_labels, confusion_predictions, confusion_probabilities)
         
-        # 打印调试信息
-        print(f"\n🔍 验证集统计:")
-        print(f"  原始序列样本数: {len(original_labels)}")
-        print(f"  语义变体样本数: {len(semantic_labels)}")
-        print(f"  混淆变体样本数: {len(confusion_labels)}")
-        print(f"  总体样本数: {len(all_labels)}")
+        # Print debug information
+        print(f"\n🔍 Validation set statistics:")
+        print(f"  Original sequence samples: {len(original_labels)}")
+        print(f"  Semantic variant samples: {len(semantic_labels)}")
+        print(f"  Confusion variant samples: {len(confusion_labels)}")
+        print(f"  Total samples: {len(all_labels)}")
         
-        # 计算综合ACC
+        # Calculate combined ACC
         variant_weight = getattr(self.config, 'variant_acc_weight', 0.35)
         combined_acc = original_metrics['acc'] * (1 - variant_weight) + \
                     (semantic_metrics['acc'] + confusion_metrics['acc']) / 2 * variant_weight
@@ -785,7 +785,7 @@ class NucleotideMambaTrainer:
         }
     
     def _move_batch_to_device(self, batch):
-        """将批次数据移动到设备"""
+        """Move batch data to device"""
         batch_gpu = {}
         for key, value in batch.items():
             if isinstance(value, torch.Tensor):
@@ -795,7 +795,7 @@ class NucleotideMambaTrainer:
         return batch_gpu
     
     def save_model(self, model, optimizer, scheduler, epoch, val_metrics, path):
-        """保存模型检查点"""
+        """Save model checkpoint"""
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -815,28 +815,28 @@ class NucleotideMambaTrainer:
         }
         
         torch.save(checkpoint, path)
-        print(f"💾 模型保存到: {path}")
+        print(f"💾 Model saved to: {path}")
     
     def train(self, variants_data):
-        """主训练函数"""
-        print(f"\n🎯 开始完全可训练的Nucleotide Transformer v3训练流程")
+        """Main training function"""
+        print(f"\n🎯 Starting fully trainable Nucleotide Transformer v3 training pipeline")
         
-        # 1. 准备数据
+        # 1. Prepare data
         train_loader, val_loader = self.prepare_data(variants_data)
         
-        # 2. 创建模型
+        # 2. Create model
         model = self.create_model()
         
-        # 3. 创建损失函数
+        # 3. Create loss functions
         class_criterion, contrastive_criterion = self.create_loss_functions()
         
-        # 4. 创建优化器
+        # 4. Create optimizer
         optimizer, scheduler = self.create_optimizer(model)
         
-        # 5. 混合精度训练
+        # 5. Mixed precision training
         scaler = GradScaler(enabled=True)
         
-        # 6. 训练循环
+        # 6. Training loop
         best_combined_acc = 0.0
         early_stop_counter = 0
         early_stopped = False
@@ -850,13 +850,13 @@ class NucleotideMambaTrainer:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             
-            # 训练
+            # Train
             train_metrics = self.train_epoch(
                 model, train_loader, class_criterion, contrastive_criterion,
                 optimizer, scheduler, scaler, epoch
             )
             
-            # 验证
+            # Validate
             val_metrics = self.validate(model, val_loader, class_criterion, contrastive_criterion)
             
             train_metrics_history.append(train_metrics)
@@ -865,28 +865,28 @@ class NucleotideMambaTrainer:
             epoch_time = time.time() - epoch_start_time
             current_lr = scheduler.get_last_lr()[0] if scheduler.get_last_lr() else 0
             
-            print(f"\n📊 Epoch {epoch+1}/{self.config.num_epochs} 总结:")
-            print(f"  耗时: {epoch_time:.1f}s | 学习率: {current_lr:.2e}")
-            print(f"  训练损失: {train_metrics['loss']:.4f} | 验证损失: {val_metrics['loss']:.4f}")
-            print(f"  训练综合ACC: {train_metrics['combined_acc']:.4f} | 验证综合ACC: {val_metrics['combined_acc']:.4f}")
+            print(f"\n📊 Epoch {epoch+1}/{self.config.num_epochs} Summary:")
+            print(f"  Time: {epoch_time:.1f}s | Learning rate: {current_lr:.2e}")
+            print(f"  Training loss: {train_metrics['loss']:.4f} | Validation loss: {val_metrics['loss']:.4f}")
+            print(f"  Training combined ACC: {train_metrics['combined_acc']:.4f} | Validation combined ACC: {val_metrics['combined_acc']:.4f}")
             
-            print(f"\n  📈 总体指标:")
-            print(f"    训练ACC: {train_metrics['overall']['acc']:.4f} | 验证ACC: {val_metrics['overall']['acc']:.4f}")
-            print(f"    训练F1: {train_metrics['overall']['f1']:.4f} | 验证F1: {val_metrics['overall']['f1']:.4f}")
-            print(f"    训练AUC: {train_metrics['overall']['auc']:.4f} | 验证AUC: {val_metrics['overall']['auc']:.4f}")
+            print(f"\n  📈 Overall metrics:")
+            print(f"    Training ACC: {train_metrics['overall']['acc']:.4f} | Validation ACC: {val_metrics['overall']['acc']:.4f}")
+            print(f"    Training F1: {train_metrics['overall']['f1']:.4f} | Validation F1: {val_metrics['overall']['f1']:.4f}")
+            print(f"    Training AUC: {train_metrics['overall']['auc']:.4f} | Validation AUC: {val_metrics['overall']['auc']:.4f}")
             
-            print(f"\n  🧬 原始序列指标:")
-            print(f"    训练ACC: {train_metrics['original']['acc']:.4f} | 验证ACC: {val_metrics['original']['acc']:.4f}")
+            print(f"\n  🧬 Original sequence metrics:")
+            print(f"    Training ACC: {train_metrics['original']['acc']:.4f} | Validation ACC: {val_metrics['original']['acc']:.4f}")
             
-            print(f"\n  🔍 特异性指标:")
-            print(f"    语义变体ACC: {train_metrics['semantic']['acc']:.4f} | {val_metrics['semantic']['acc']:.4f}")
-            print(f"    混淆变体ACC: {train_metrics['confusion']['acc']:.4f} | {val_metrics['confusion']['acc']:.4f}")
+            print(f"\n  🔍 Specificity metrics:")
+            print(f"    Semantic variant ACC: {train_metrics['semantic']['acc']:.4f} | {val_metrics['semantic']['acc']:.4f}")
+            print(f"    Confusion variant ACC: {train_metrics['confusion']['acc']:.4f} | {val_metrics['confusion']['acc']:.4f}")
             
-            # 打印缓存统计
+            # Print cache statistics
             cache_stats = model.get_cache_stats()
-            print(f"\n  💾 缓存统计: 命中率: {cache_stats['hit_rate']:.2%} | 缓存大小: {cache_stats['cache_size']:,}")
+            print(f"\n  💾 Cache statistics: Hit rate: {cache_stats['hit_rate']:.2%} | Cache size: {cache_stats['cache_size']:,}")
             
-            # 保存最佳模型
+            # Save best model
             if val_metrics['combined_acc'] > best_combined_acc:
                 best_combined_acc = val_metrics['combined_acc']
                 early_stop_counter = 0
@@ -894,22 +894,22 @@ class NucleotideMambaTrainer:
                 best_model_path = os.path.join(self.config.output_dir, "best_nucleotide_v3_mamba_model.pth")
                 self.save_model(model, optimizer, scheduler, epoch + 1, val_metrics, best_model_path)
                 
-                print(f"\n✅ 新的最佳综合ACC: {best_combined_acc:.4f}")
+                print(f"\n✅ New best combined ACC: {best_combined_acc:.4f}")
             else:
                 early_stop_counter += 1
-                print(f"\n⚠️  综合ACC未改善，早停计数器: {early_stop_counter}/{self.config.early_stop_patience}")
+                print(f"\n⚠️  Combined ACC not improved, early stop counter: {early_stop_counter}/{self.config.early_stop_patience}")
             
             if early_stop_counter >= self.config.early_stop_patience:
-                print(f"\n🛑 触发早停，停止训练")
+                print(f"\n🛑 Early stopping triggered, stopping training")
                 early_stopped = True
                 break
         
-        # 保存最终模型
+        # Save final model
         final_model_path = os.path.join(self.config.output_dir, "final_nucleotide_v3_mamba_model.pth")
         self.save_model(model, optimizer, scheduler, self.config.num_epochs, 
                        val_metrics_history[-1] if val_metrics_history else {}, final_model_path)
         
-        # 保存训练日志
+        # Save training log
         log_data = {
             'config': self.config.__dict__,
             'train_metrics': train_metrics_history,
@@ -930,50 +930,50 @@ class NucleotideMambaTrainer:
         with open(log_path, 'w') as f:
             json.dump(log_data, f, indent=2, default=str)
         
-        print(f"\n📄 训练日志保存到: {log_path}")
+        print(f"\n📄 Training log saved to: {log_path}")
         
-        # 7. 调用可视化模块（可选）
+        # 7. Call visualization module (optional)
         try:
             from training_visualizer import integrate_visualization
-            print(f"\n🎨 生成训练可视化图表...")
+            print(f"\n🎨 Generating training visualization charts...")
             integrate_visualization(self, train_metrics_history, val_metrics_history, self.config, early_stopped)
-            print(f"✅ 可视化图表生成完成")
+            print(f"✅ Visualization charts generated successfully")
         except ImportError as e:
-            print(f"⚠️  无法导入可视化模块: {str(e)}")
+            print(f"⚠️  Unable to import visualization module: {str(e)}")
         except Exception as e:
-            print(f"⚠️  可视化生成失败: {str(e)}")
+            print(f"⚠️  Visualization generation failed: {str(e)}")
             import traceback
             traceback.print_exc()
         
-        # 清空缓存
+        # Clear cache
         model.clear_cache()
         
         return model, train_metrics_history, val_metrics_history
 
 
 def train_nucleotide(variants_data):
-    """Nucleotide Transformer v3训练主函数"""
+    """Nucleotide Transformer v3 training main function"""
     trainer = NucleotideMambaTrainer(config)
     
     try:
         model, train_history, val_history = trainer.train(variants_data)
-        print(f"\n🎉 Nucleotide Transformer v3训练完成!")
+        print(f"\n🎉 Nucleotide Transformer v3 training completed!")
         
         if val_history:
             final_val = val_history[-1]
-            print(f"\n📈 最终验证集指标:")
-            print(f"  综合ACC: {final_val['combined_acc']:.4f}")
-            print(f"  总体ACC: {final_val['overall']['acc']:.4f}")
-            print(f"  总体F1: {final_val['overall']['f1']:.4f}")
-            print(f"  总体AUC: {final_val['overall']['auc']:.4f}")
-            print(f"  总体MCC: {final_val['overall']['mcc']:.4f}")
-            print(f"  原始ACC: {final_val['original']['acc']:.4f}")
-            print(f"  语义ACC: {final_val['semantic']['acc']:.4f}")
-            print(f"  混淆ACC: {final_val['confusion']['acc']:.4f}")
+            print(f"\n📈 Final validation set metrics:")
+            print(f"  Combined ACC: {final_val['combined_acc']:.4f}")
+            print(f"  Overall ACC: {final_val['overall']['acc']:.4f}")
+            print(f"  Overall F1: {final_val['overall']['f1']:.4f}")
+            print(f"  Overall AUC: {final_val['overall']['auc']:.4f}")
+            print(f"  Overall MCC: {final_val['overall']['mcc']:.4f}")
+            print(f"  Original ACC: {final_val['original']['acc']:.4f}")
+            print(f"  Semantic ACC: {final_val['semantic']['acc']:.4f}")
+            print(f"  Confusion ACC: {final_val['confusion']['acc']:.4f}")
         
         return model
     except Exception as e:
-        print(f"❌ 训练失败: {str(e)}")
+        print(f"❌ Training failed: {str(e)}")
         import traceback
         traceback.print_exc()
         return None

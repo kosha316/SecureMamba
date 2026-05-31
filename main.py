@@ -1,6 +1,6 @@
 """
-主脚本 - Nucleotide Transformer v3版本
-完全通过配置文件运行，无需命令行参数
+Main Script - Nucleotide Transformer v3 Version
+Runs entirely through configuration file, no command-line arguments needed
 """
 
 import os
@@ -11,11 +11,11 @@ import pickle
 import json
 import glob
 
-# 添加项目根目录到Python路径
+# Add project root directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-# 导入自定义模块
+# Import custom modules
 from config import config
 from data_preprocessing import preprocess_data
 from synonymous_variants import generate_triplet_views_parallel
@@ -24,83 +24,83 @@ from realtime_trainer import NucleotideMambaTrainer, train_nucleotide
 
 
 def setup_environment():
-    """设置环境"""
+    """Setup environment"""
     print("=" * 80)
-    print("🧬 Nucleotide Transformer v3 Mamba模型 (完全可训练)")
+    print("🧬 Nucleotide Transformer v3 Mamba Model (Fully Trainable)")
     print("=" * 80)
     
-    # 创建输出目录
+    # Create output directory
     os.makedirs(config.output_dir, exist_ok=True)
     
-    print(f"🔧 环境设置完成")
-    print(f"📊 模型类型: {config.model_type}")
-    print(f"📁 输出目录: {config.output_dir}")
-    print(f"⚡ NTv3训练模式: 完全可训练 (不冻结参数)")
+    print(f"🔧 Environment setup completed")
+    print(f"📊 Model type: {config.model_type}")
+    print(f"📁 Output directory: {config.output_dir}")
+    print(f"⚡ NTv3 training mode: Fully trainable (no parameter freezing)")
     
-    # 打印关键配置
-    print(f"\n⚙️  配置参数:")
-    print(f"   批次大小: {config.batch_size} ⚠️ (NTv3内存需求大)")
-    print(f"   训练轮数: {config.num_epochs}")
-    print(f"   最大序列长度: {config.max_seq_length}")
-    print(f"   设备: {config.device}")
-    print(f"   Transformer模型: {config.transformer_model_repo}")
-    print(f"   NTv3学习率: {config.learning_rate * config.ntv3_learning_rate_multiplier} (其他参数: {config.learning_rate})")
+    # Print key configurations
+    print(f"\n⚙️  Configuration parameters:")
+    print(f"   Batch size: {config.batch_size} ⚠️ (NTv3 requires large memory)")
+    print(f"   Number of epochs: {config.num_epochs}")
+    print(f"   Maximum sequence length: {config.max_seq_length}")
+    print(f"   Device: {config.device}")
+    print(f"   Transformer model: {config.transformer_model_repo}")
+    print(f"   NTv3 learning rate: {config.learning_rate * config.ntv3_learning_rate_multiplier} (Other parameters: {config.learning_rate})")
 
 
 def run_preprocessing():
-    """运行预处理阶段"""
+    """Run preprocessing stage"""
     print(f"\n{'='*60}")
-    print(f"🚀 阶段1: 数据预处理")
+    print(f"🚀 Stage 1: Data Preprocessing")
     print(f"{'='*60}")
     
     try:
-        print("📥 加载原始FASTA数据并预处理...")
+        print("📥 Loading raw FASTA data and preprocessing...")
         segments = preprocess_data(config)
         
         if not segments:
-            print("❌ 预处理未生成任何数据")
+            print("❌ Preprocessing did not generate any data")
             return None
         
-        print(f"✅ 预处理完成，生成 {len(segments):,} 个片段")
+        print(f"✅ Preprocessing completed, generated {len(segments):,} fragments")
         
-        # 保存预处理结果
+        # Save preprocessing results
         preprocess_file = os.path.join(config.output_dir, "preprocessed_segments.pkl")
         with open(preprocess_file, 'wb') as f:
             pickle.dump(segments, f)
-        print(f"📁 预处理数据保存到: {preprocess_file}")
+        print(f"📁 Preprocessed data saved to: {preprocess_file}")
         
         return segments
         
     except Exception as e:
-        print(f"❌ 预处理失败: {str(e)}")
+        print(f"❌ Preprocessing failed: {str(e)}")
         import traceback
         traceback.print_exc()
         return None
 
 
 def generate_variants(segments, save_output=True):
-    """运行变体生成阶段"""
+    """Run variant generation stage"""
     print(f"\n{'='*60}")
-    print(f"🚀 阶段2: 生成变体数据")
+    print(f"🚀 Stage 2: Generating Variant Data")
     print(f"{'='*60}")
     
     if not segments:
-        print("❌ 没有预处理数据，无法生成变体")
+        print("❌ No preprocessed data available, cannot generate variants")
         return None
     
-    # 分离正负样本
+    # Separate positive and negative samples
     positive_segments = [seg for seg in segments if seg['label'] == 1]
     negative_segments = [seg for seg in segments if seg['label'] == 0]
     
-    print(f"📊 样本统计:")
-    print(f"   总片段数: {len(segments)}")
-    print(f"   致病性（正样本）: {len(positive_segments)}")
-    print(f"   非致病性（负样本）: {len(negative_segments)}")
+    print(f"📊 Sample statistics:")
+    print(f"   Total fragments: {len(segments)}")
+    print(f"   Pathogenic (positive samples): {len(positive_segments)}")
+    print(f"   Non-pathogenic (negative samples): {len(negative_segments)}")
     
     if len(positive_segments) == 0:
-        print("⚠️  没有致病性序列（正样本），跳过变体生成")
+        print("⚠️  No pathogenic sequences (positive samples), skipping variant generation")
         
-        # 为负样本创建标准格式
+        # Create standard format for negative samples
         all_results = []
         for seg in negative_segments:
             all_results.append({
@@ -119,28 +119,28 @@ def generate_variants(segments, save_output=True):
             variants_file = os.path.join(config.output_dir, "variants_data.pkl")
             with open(variants_file, 'wb') as f:
                 pickle.dump(all_results, f)
-            print(f"📁 变体数据保存到: {variants_file}")
+            print(f"📁 Variant data saved to: {variants_file}")
         
         return all_results
     
-    # 变体生成配置
+    # Variant generation configuration
     variant_config = config.get_variant_generation_config()
     
     try:
-        print(f"🔄 生成变体数据...")
+        print(f"🔄 Generating variant data...")
         positive_results = generate_triplet_views_parallel(
             positive_segments,
             **variant_config
         )
         
-        # 合并所有数据
+        # Merge all data
         all_results = []
         
-        # 添加带变体的正样本结果
+        # Add positive results with variants
         for result in positive_results:
             all_results.append(result)
         
-        # 添加不带变体的负样本原始数据
+        # Add negative sample original data without variants
         for seg in negative_segments:
             all_results.append({
                 'original_seq': seg['original_seq'],
@@ -154,31 +154,31 @@ def generate_variants(segments, save_output=True):
                 'has_variants': False
             })
         
-        # 统计信息
+        # Statistics
         total_with_variants = sum(1 for r in all_results if r.get('has_variants', False))
         total_no_variants = sum(1 for r in all_results if not r.get('has_variants', False))
         
-        print(f"📊 变体生成完成统计:")
-        print(f"   带变体序列（正样本）: {total_with_variants}")
-        print(f"   无变体序列（负样本）: {total_no_variants}")
+        print(f"📊 Variant generation completed statistics:")
+        print(f"   Sequences with variants (positive samples): {total_with_variants}")
+        print(f"   Sequences without variants (negative samples): {total_no_variants}")
         
-        # 详细统计
+        # Detailed statistics
         semantic_count = sum(len(r['positive_views']) for r in positive_results if len(r['positive_views']) > 0)
         confusion_count = sum(1 for r in positive_results if 'confusion' in r.get('view_types', []))
         random_mutation_count = sum(len(r['contrastive_negative_views']) for r in positive_results)
         
-        print(f"   语义变体总数: {semantic_count}")
-        print(f"   混淆变体总数: {confusion_count}")
-        print(f"   随机突变变体总数: {random_mutation_count}")
+        print(f"   Total semantic variants: {semantic_count}")
+        print(f"   Total confusion variants: {confusion_count}")
+        print(f"   Total random mutation variants: {random_mutation_count}")
         
         if save_output:
-            # 保存变体数据
+            # Save variant data
             variants_file = os.path.join(config.output_dir, "variants_data.pkl")
             with open(variants_file, 'wb') as f:
                 pickle.dump(all_results, f)
-            print(f"📁 变体数据保存到: {variants_file}")
+            print(f"📁 Variant data saved to: {variants_file}")
             
-            # 保存统计信息
+            # Save statistics
             stats = {
                 'total_samples': len(all_results),
                 'positive_with_variants': total_with_variants,
@@ -191,62 +191,62 @@ def generate_variants(segments, save_output=True):
             stats_file = os.path.join(config.output_dir, "variants_stats.json")
             with open(stats_file, 'w') as f:
                 json.dump(stats, f, indent=2)
-            print(f"📊 统计信息保存到: {stats_file}")
+            print(f"📊 Statistics saved to: {stats_file}")
         
         return all_results
         
     except Exception as e:
-        print(f"❌ 变体生成失败: {str(e)}")
+        print(f"❌ Variant generation failed: {str(e)}")
         import traceback
         traceback.print_exc()
         return None
 
 
 def load_variants_file(variants_file_path):
-    """从文件加载变体数据"""
-    print(f"\n📥 从文件加载变体数据: {variants_file_path}")
+    """Load variant data from file"""
+    print(f"\n📥 Loading variant data from file: {variants_file_path}")
     
     try:
         with open(variants_file_path, 'rb') as f:
             variants_data = pickle.load(f)
         
-        print(f"✅ 加载成功，共 {len(variants_data):,} 个样本")
+        print(f"✅ Loading successful, total {len(variants_data):,} samples")
         
-        # 统计信息
+        # Statistics
         total_with_variants = sum(1 for r in variants_data if r.get('has_variants', False))
         total_no_variants = sum(1 for r in variants_data if not r.get('has_variants', False))
         
-        print(f"📊 数据统计:")
-        print(f"   带变体序列（正样本）: {total_with_variants}")
-        print(f"   无变体序列（负样本）: {total_no_variants}")
+        print(f"📊 Data statistics:")
+        print(f"   Sequences with variants (positive samples): {total_with_variants}")
+        print(f"   Sequences without variants (negative samples): {total_no_variants}")
         
-        # 详细统计（如果可能）
+        # Detailed statistics (if possible)
         try:
             semantic_count = sum(len(r.get('positive_views', [])) for r in variants_data if len(r.get('positive_views', [])) > 0)
             confusion_count = sum(1 for r in variants_data if 'confusion' in r.get('view_types', []))
             random_mutation_count = sum(len(r.get('contrastive_negative_views', [])) for r in variants_data)
             
-            print(f"   语义变体总数: {semantic_count}")
-            print(f"   混淆变体总数: {confusion_count}")
-            print(f"   随机突变变体总数: {random_mutation_count}")
+            print(f"   Total semantic variants: {semantic_count}")
+            print(f"   Total confusion variants: {confusion_count}")
+            print(f"   Total random mutation variants: {random_mutation_count}")
         except:
-            print("⚠️  无法获取详细变体统计信息")
+            print("⚠️  Unable to retrieve detailed variant statistics")
         
         return variants_data
         
     except Exception as e:
-        print(f"❌ 加载变体文件失败: {str(e)}")
+        print(f"❌ Failed to load variant file: {str(e)}")
         import traceback
         traceback.print_exc()
         return None
 
 
 def find_latest_variants_file(directory=None):
-    """查找最新的变体文件"""
+    """Find the latest variant file"""
     if directory is None:
         directory = config.output_dir
     
-    # 查找可能的变体文件
+    # Search for possible variant files
     patterns = [
         "variants_data.pkl",
         "segments_with_variants.pkl",
@@ -257,7 +257,7 @@ def find_latest_variants_file(directory=None):
     for pattern in patterns:
         files = glob.glob(os.path.join(directory, pattern))
         if files:
-            # 返回最新的文件
+            # Return the latest file
             latest_file = max(files, key=os.path.getmtime)
             return latest_file
     
@@ -265,111 +265,111 @@ def find_latest_variants_file(directory=None):
 
 
 def run_nucleotide_training(variants_data):
-    """运行Nucleotide Transformer v3训练阶段"""
+    """Run Nucleotide Transformer v3 training stage"""
     print(f"\n{'='*60}")
-    print(f"🚀 阶段3: Nucleotide Transformer v3训练 (完全可训练)")
+    print(f"🚀 Stage 3: Nucleotide Transformer v3 Training (Fully Trainable)")
     print(f"{'='*60}")
     
     try:
-        # 创建训练器
+        # Create trainer
         trainer = NucleotideMambaTrainer(config)
         
-        # 直接从变体数据开始训练
-        print("🔧 开始完全可训练的Nucleotide Transformer v3训练...")
+        # Start training directly from variant data
+        print("🔧 Starting fully trainable Nucleotide Transformer v3 training...")
         model, train_history, val_history = trainer.train(variants_data)
         
         if model is not None:
-            print(f"✅ 训练完成")
+            print(f"✅ Training completed")
             
-            # 打印最终结果
+            # Print final results
             if val_history:
                 final_val = val_history[-1]
-                print(f"\n📈 最终验证集指标:")
-                print(f"  损失: {final_val['loss']:.4f}")
-                print(f"  综合ACC: {final_val['combined_acc']:.4f}")
-                print(f"  总体ACC: {final_val['overall']['acc']:.4f}")
-                print(f"  总体AUC: {final_val['overall']['auc']:.4f}")
-                print(f"  总体F1: {final_val['overall']['f1']:.4f}")
-                print(f"  总体MCC: {final_val['overall']['mcc']:.4f}")
-                print(f"  原始ACC: {final_val['original']['acc']:.4f}")
-                print(f"  语义ACC: {final_val['semantic']['acc']:.4f}")
-                print(f"  混淆ACC: {final_val['confusion']['acc']:.4f}")
+                print(f"\n📈 Final validation set metrics:")
+                print(f"  Loss: {final_val['loss']:.4f}")
+                print(f"  Combined ACC: {final_val['combined_acc']:.4f}")
+                print(f"  Overall ACC: {final_val['overall']['acc']:.4f}")
+                print(f"  Overall AUC: {final_val['overall']['auc']:.4f}")
+                print(f"  Overall F1: {final_val['overall']['f1']:.4f}")
+                print(f"  Overall MCC: {final_val['overall']['mcc']:.4f}")
+                print(f"  Original ACC: {final_val['original']['acc']:.4f}")
+                print(f"  Semantic ACC: {final_val['semantic']['acc']:.4f}")
+                print(f"  Confusion ACC: {final_val['confusion']['acc']:.4f}")
             
-            # 模型保存路径
+            # Model save paths
             best_model_path = os.path.join(config.output_dir, "best_nucleotide_v3_mamba_model.pth")
             final_model_path = os.path.join(config.output_dir, "final_nucleotide_v3_mamba_model.pth")
             log_path = os.path.join(config.output_dir, "nucleotide_v3_training_log.json")
             
-            print(f"\n📁 输出文件:")
-            print(f"  最佳模型: {best_model_path}")
-            print(f"  最终模型: {final_model_path}")
-            print(f"  训练日志: {log_path}")
+            print(f"\n📁 Output files:")
+            print(f"  Best model: {best_model_path}")
+            print(f"  Final model: {final_model_path}")
+            print(f"  Training log: {log_path}")
             
             return True
         else:
-            print(f"❌ 训练失败")
+            print(f"❌ Training failed")
             return False
     except Exception as e:
-        print(f"❌ 训练过程出错: {str(e)}")
+        print(f"❌ Training process error: {str(e)}")
         import traceback
         traceback.print_exc()
         return False
 
 
 def main():
-    """主函数 - 完全通过配置文件运行"""
+    """Main function - runs entirely through configuration file"""
     # os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
-    # 设置环境
+    # Setup environment
     setup_environment()
 
     
-    # 从config中读取运行模式
-    run_mode = getattr(config, 'run_mode', 'all')  # 默认为全流程
+    # Read run mode from config
+    run_mode = getattr(config, 'run_mode', 'all')  # Default to full pipeline
     
-    # 从config中读取是否使用现有变体文件
+    # Read whether to use existing variant file from config
     use_existing_variants = getattr(config, 'use_existing_variants', False)
     variants_file_path = getattr(config, 'variants_file_path', None)
     auto_find_variants = getattr(config, 'auto_find_variants', False)
     
-    print(f"📋 运行模式: {run_mode}")
+    print(f"📋 Run mode: {run_mode}")
     
-    # 记录开始时间
+    # Record start time
     start_time = datetime.now()
-    print(f"\n⏰ 开始时间: {start_time.strftime('%Y-%m-d %H:%M:%S')}")
+    print(f"\n⏰ Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     
     success = True
     segments = None
     variants_data = None
     
-    # ==================== 根据模式执行 ====================
+    # ==================== Execute based on mode ====================
     
     if run_mode == "train-only" or (run_mode == "train" and (variants_file_path or auto_find_variants or use_existing_variants)):
-        # 模式：仅训练，从文件加载变体数据
-        print(f"\n🎯 模式：仅训练（从文件加载）")
+        # Mode: Training only, load variant data from file
+        print(f"\n🎯 Mode: Training only (load from file)")
         
-        # 确定变体文件路径
+        # Determine variant file path
         file_path_to_load = None
         
         if variants_file_path:
             file_path_to_load = variants_file_path
             if not os.path.exists(file_path_to_load):
-                print(f"❌ 变体文件不存在: {file_path_to_load}")
+                print(f"❌ Variant file does not exist: {file_path_to_load}")
                 success = False
         elif auto_find_variants:
             file_path_to_load = find_latest_variants_file()
             if file_path_to_load:
-                print(f"🔍 自动查找到变体文件: {file_path_to_load}")
+                print(f"🔍 Auto-found variant file: {file_path_to_load}")
             else:
-                print("❌ 未找到变体文件")
+                print("❌ No variant file found")
                 success = False
         elif use_existing_variants:
-            # 在输出目录中查找变体文件
+            # Look for variant file in output directory
             default_variants_file = os.path.join(config.output_dir, "variants_data.pkl")
             if os.path.exists(default_variants_file):
                 file_path_to_load = default_variants_file
-                print(f"🔍 使用默认变体文件: {file_path_to_load}")
+                print(f"🔍 Using default variant file: {file_path_to_load}")
             else:
-                print(f"❌ 默认变体文件不存在: {default_variants_file}")
+                print(f"❌ Default variant file does not exist: {default_variants_file}")
                 success = False
         
         if success and file_path_to_load:
@@ -381,24 +381,24 @@ def main():
             success = run_nucleotide_training(variants_data)
     
     elif run_mode == "preprocess":
-        # 模式：仅预处理
-        print(f"\n🎯 模式：仅预处理")
+        # Mode: Preprocessing only
+        print(f"\n🎯 Mode: Preprocessing only")
         segments = run_preprocessing()
         success = (segments is not None)
     
     elif run_mode == "generate":
-        # 模式：仅生成变体
-        print(f"\n🎯 模式：仅生成变体")
+        # Mode: Generate variants only
+        print(f"\n🎯 Mode: Generate variants only")
         
-        # 加载预处理数据
+        # Load preprocessed data
         preprocessed_file = getattr(config, 'preprocessed_file', None)
         if preprocessed_file and os.path.exists(preprocessed_file):
-            print(f"📥 从文件加载预处理数据: {preprocessed_file}")
+            print(f"📥 Loading preprocessed data from file: {preprocessed_file}")
             with open(preprocessed_file, 'rb') as f:
                 segments = pickle.load(f)
-            print(f"✅ 加载成功，共 {len(segments):,} 个片段")
+            print(f"✅ Loading successful, total {len(segments):,} fragments")
         else:
-            print("🔄 重新运行预处理...")
+            print("🔄 Running preprocessing again...")
             segments = run_preprocessing()
         
         if segments:
@@ -409,68 +409,68 @@ def main():
             success = False
     
     elif run_mode == "train":
-        # 模式：训练（但不指定变体文件，需要先运行预处理和变体生成）
-        print(f"\n🎯 模式：训练（需要先运行预处理和变体生成）")
+        # Mode: Training (but no variant file specified, need to run preprocessing and variant generation first)
+        print(f"\n🎯 Mode: Training (requires preprocessing and variant generation first)")
         
-        # 尝试查找现有的变体文件
+        # Try to find existing variant file
         variants_file_path = find_latest_variants_file()
         if variants_file_path and use_existing_variants:
-            print(f"🔍 找到现有变体文件: {variants_file_path}")
+            print(f"🔍 Found existing variant file: {variants_file_path}")
             variants_data = load_variants_file(variants_file_path)
             if variants_data:
                 success = run_nucleotide_training(variants_data)
             else:
                 success = False
         else:
-            # 重新运行全流程
+            # Run full pipeline
             run_mode = "all"
-            print("🔄 未找到或未启用现有变体文件，运行全流程...")
+            print("🔄 No existing variant file found or not enabled, running full pipeline...")
     
     if run_mode == "all" and success:
-        # 模式：全流程
-        print(f"\n🎯 模式：全流程")
+        # Mode: Full pipeline
+        print(f"\n🎯 Mode: Full pipeline")
         
-        # 1. 预处理
+        # 1. Preprocessing
         segments = run_preprocessing()
         if segments is None:
             success = False
         
-        # 2. 生成变体
+        # 2. Generate variants
         if success:
             save_variants = getattr(config, 'save_variants', True)
             variants_data = generate_variants(segments, save_output=save_variants)
             if variants_data is None:
                 success = False
         
-        # 3. 训练
+        # 3. Training
         if success:
             success = run_nucleotide_training(variants_data)
     
-    # ==================== 流程总结 ====================
+    # ==================== Pipeline Summary ====================
     
-    # 记录结束时间
+    # Record end time
     end_time = datetime.now()
     duration = end_time - start_time
     
     print(f"\n{'='*80}")
-    print("📊 流程总结")
+    print("📊 Pipeline Summary")
     print(f"{'='*80}")
-    print(f"  开始时间: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"  结束时间: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"  总耗时: {duration}")
+    print(f"  Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  End time: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  Total duration: {duration}")
     
     if run_mode == "preprocess" and success:
         preprocess_file = os.path.join(config.output_dir, "preprocessed_segments.pkl")
-        print(f"\n📁 预处理数据文件: {preprocess_file}")
+        print(f"\n📁 Preprocessed data file: {preprocess_file}")
     
     if run_mode == "generate" and success:
         variants_file = os.path.join(config.output_dir, "variants_data.pkl")
-        print(f"\n📁 变体数据文件: {variants_file}")
+        print(f"\n📁 Variant data file: {variants_file}")
     
     if success:
-        print(f"\n✅ 流程执行成功!")
+        print(f"\n✅ Pipeline execution successful!")
     else:
-        print(f"\n❌ 某些阶段失败，请检查日志")
+        print(f"\n❌ Some stages failed, please check the logs")
     
     return success
 

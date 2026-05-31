@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-归因分析器 - 积分梯度归因（logits，全N基线）
-横坐标显示位置编号（不显示碱基），不标注具体位置
-支持从 FASTA 中随机挑选指定数量的序列进行分析，并自动过滤长度超过阈值的序列
+Attribution Analyzer - Integrated Gradients Attribution (logits, all-N baseline)
+X-axis shows position numbers (no bases displayed), no specific position labels
+Supports random selection of specified number of sequences from FASTA, with automatic filtering
+of sequences exceeding length threshold
 """
 
 import torch
@@ -16,7 +17,7 @@ import argparse
 import warnings
 import random
 
-# 可选进度条
+# Optional progress bar
 try:
     from tqdm import tqdm
     HAS_TQDM = True
@@ -27,10 +28,10 @@ warnings.filterwarnings("ignore")
 
 FONT_SIZE = 14
 
-# 导入您的模型（请确保 model.py 在同一目录）
+# Import your model (make sure model.py is in the same directory)
 from model import NucleotideMambaModel, DualPathMambaBlock
 
-# ========================== 分析器类 ==========================
+# ========================== Analyzer Class ==========================
 class AttributionAnalyzer:
     def __init__(self, model, output_dir="attribution_results", label_interval=10):
         self.model = model
@@ -39,13 +40,13 @@ class AttributionAnalyzer:
         self.label_interval = label_interval
         os.makedirs(output_dir, exist_ok=True)
         self.max_seq_len = getattr(model, 'max_seq_len', 2048)
-        print(f"🔧 归因分析器 (积分梯度归因)")
-        print(f"  设备: {self.device}")
-        print(f"  模型最大序列长度: {self.max_seq_len}")
-        print(f"  横坐标位置显示间隔: {label_interval} bp")
-        print(f"  注意: 超过 {self.max_seq_len} bp 的序列将被截断为前 {self.max_seq_len} 个碱基")
+        print(f"🔧 Attribution Analyzer (Integrated Gradients Attribution)")
+        print(f"  Device: {self.device}")
+        print(f"  Model max sequence length: {self.max_seq_len}")
+        print(f"  X-axis position display interval: {label_interval} bp")
+        print(f"  Note: Sequences exceeding {self.max_seq_len} bp will be truncated to first {self.max_seq_len} bases")
 
-    # ---------- 辅助：预测概率 ----------
+    # ---------- Helper: Predict probability ----------
     def _predict_prob(self, sequence: str) -> float:
         if len(sequence) > self.max_seq_len:
             sequence = sequence[:self.max_seq_len]
@@ -54,7 +55,7 @@ class AttributionAnalyzer:
             prob = torch.sigmoid(class_pred[0]).item()
             return prob
 
-    # ---------- 积分梯度归因（logits，全N基线）----------
+    # ---------- Integrated Gradients Attribution (logits, all-N baseline) ----------
     def _forward_to_logits(self, embeddings: torch.Tensor) -> torch.Tensor:
         x = self.model.embedding_projection(embeddings)
         for block in self.model.mamba_blocks:
@@ -100,7 +101,7 @@ class AttributionAnalyzer:
         attr = (emb_actual - emb_baseline) * avg_grad
         attr_sum = attr.squeeze(0).sum(dim=-1).cpu().numpy()
 
-        # 异常值平滑
+        # Outlier smoothing
         vals, counts = np.unique(attr_sum, return_counts=True)
         for v, c in zip(vals, counts):
             if v != 0 and c / len(attr_sum) > 0.05:
@@ -113,31 +114,31 @@ class AttributionAnalyzer:
                         attr_sum[idx] = attr_sum[idx+1]
                     else:
                         attr_sum[idx] = attr_sum[idx-1]
-                print(f"  已修复异常值 {v:.6f}，共 {c} 处")
+                print(f"  Fixed outlier value {v:.6f}, total {c} occurrences")
 
-        # 动态裁剪极端值
+        # Dynamic clipping of extreme values
         clip_limit = np.percentile(np.abs(attr_sum), 99) if len(attr_sum) > 0 else 0.5
         if clip_limit > 0.1:
             attr_sum = np.clip(attr_sum, -clip_limit, clip_limit)
         return attr_sum
 
-    # ---------- 绘图与保存 ----------
+    # ---------- Plotting and Saving ----------
     def _save_plot(self, importance, sequence, name, base_pred, suffix, color, ylabel):
         L = len(importance)
         fig_width = min(20, max(10, L * 0.05))
         plt.figure(figsize=(fig_width, 5))
         
-        # ========== 修改：隐藏右端和顶部的框线 ==========
+        # ========== Modification: Hide top and right spines ==========
         ax = plt.gca()
-        ax.spines['top'].set_visible(False)      # 隐藏顶部框线
-        ax.spines['right'].set_visible(False)    # 隐藏右侧框线
-        ax.spines['bottom'].set_linewidth(1.5)   # 底部框线宽度
-        ax.spines['left'].set_linewidth(1.5)     # 左侧框线宽度
+        ax.spines['top'].set_visible(False)      # Hide top spine
+        ax.spines['right'].set_visible(False)    # Hide right spine
+        ax.spines['bottom'].set_linewidth(1.5)   # Bottom spine width
+        ax.spines['left'].set_linewidth(1.5)     # Left spine width
         
-        # ========== X轴刻度间隔固定为25 ==========
-        # 生成从0开始，间隔为25的刻度位置
+        # ========== X-axis tick interval fixed at 25 ==========
+        # Generate tick positions starting from 0 with interval 25
         ticks_positions = list(range(25, L, 25))
-        # 对应的标签（位置编号从1开始）
+        # Corresponding labels (position numbers starting from 1)
         ticks_labels = [str(i) for i in ticks_positions]
         
         plt.bar(range(L), importance, width=1.0, color=color, alpha=0.7)
@@ -147,15 +148,15 @@ class AttributionAnalyzer:
         plt.title(f'{name} | Pred={base_pred:.4f}', fontsize=FONT_SIZE)
         # plt.grid(axis='y', alpha=0.3)
         
-        # ========== 修改：设置Y轴刻度小数点后两位 ==========
+        # ========== Modification: Set Y-axis ticks to 2 decimal places ==========
         from matplotlib.ticker import FormatStrFormatter
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         
-        # ========== 修改：设置坐标轴刻度线宽度和标签字体大小 ==========
+        # ========== Modification: Set axis tick width and label font size ==========
         ax.tick_params(axis='both', which='major', width=1.5, labelsize=FONT_SIZE)
         ax.tick_params(axis='both', which='minor', width=1.5, labelsize=FONT_SIZE)
 
-        # X轴刻度设置
+        # X-axis tick settings
         plt.xticks(ticks=ticks_positions, labels=ticks_labels, rotation=0, ha='center', fontsize=FONT_SIZE)
         plt.subplots_adjust(bottom=0.1)
         
@@ -196,29 +197,29 @@ class AttributionAnalyzer:
                 'low_importance_positions': low_indices
             }, f, indent=2)
 
-        print(f"  {suffix} 图保存至: {self.output_dir}/{name}_{suffix}.png (长度 {L})")
+        print(f"  {suffix} plot saved to: {self.output_dir}/{name}_{suffix}.png (length {L})")
         top5 = np.argsort(np.abs(importance))[-5:][::-1]
-        print(f"    最重要位置 (前5): {top5} | 碱基: {[sequence[i] for i in top5]} | 值: {importance[top5]}")
+        print(f"    Top 5 important positions: {top5} | Bases: {[sequence[i] for i in top5]} | Values: {importance[top5]}")
         if high_indices:
-            print(f"    超过95th pos的位置: {high_indices} | 值: {importance[high_indices]}")
+            print(f"    Positions above 95th percentile: {high_indices} | Values: {importance[high_indices]}")
         if low_indices:
-            print(f"    低于5th neg的位置: {low_indices} | 值: {importance[low_indices]}")
+            print(f"    Positions below 5th percentile: {low_indices} | Values: {importance[low_indices]}")
 
     def analyze_sequence(self, sequence: str, name: str):
-        print(f"\n{'='*70}\n序列: {name}\n原始长度: {len(sequence)} bp")
+        print(f"\n{'='*70}\nSequence: {name}\nOriginal length: {len(sequence)} bp")
         if len(sequence) > self.max_seq_len:
-            print(f"  注意: 序列超过模型最大长度 {self.max_seq_len}，将被截断为前 {self.max_seq_len} 个碱基")
+            print(f"  Note: Sequence exceeds model max length {self.max_seq_len}, will be truncated to first {self.max_seq_len} bases")
             sequence = sequence[:self.max_seq_len]
         base = self._predict_prob(sequence)
-        print(f"  预测概率: {base:.4f}")
+        print(f"  Predicted probability: {base:.4f}")
 
         imp_ig = self.integrated_gradients_logits(sequence, steps=150)
         self._save_plot(imp_ig, sequence, name, base, "integrated_gradients_logits", color='steelblue', ylabel='Importance (IG on logits)')
         return base
 
-# ========================== 模型加载 ==========================
+# ========================== Model Loading ==========================
 def load_model(model_path: str, freeze_transformer: bool = False, override_max_len: int = 2048):
-    print(f"📥 加载模型: {model_path}")
+    print(f"📥 Loading model: {model_path}")
     checkpoint = torch.load(model_path, map_location='cpu')
     model_config = checkpoint.get('model_config', {})
     if not model_config:
@@ -252,88 +253,88 @@ def load_model(model_path: str, freeze_transformer: bool = False, override_max_l
     state_dict = checkpoint.get('model_state_dict', checkpoint)
     try:
         model.load_state_dict(state_dict, strict=False)
-        print("  ✅ 模型权重加载成功（非严格模式）")
+        print("  ✅ Model weights loaded successfully (non-strict mode)")
     except Exception as e:
-        print(f"  ⚠️ 权重加载警告: {e}")
+        print(f"  ⚠️ Weight loading warning: {e}")
     if not freeze_transformer:
         for param in model.parameters():
             param.requires_grad = True
-        print("  🔓 已解冻所有模型参数")
+        print("  🔓 All model parameters unfrozen")
     model.eval()
     return model
 
-# ========================== 主函数 ==========================
+# ========================== Main Function ==========================
 def main():
-    parser = argparse.ArgumentParser(description="归因分析 - 仅积分梯度归因，横坐标显示位置编号，不显示碱基标签，不标注重要位置")
-    parser.add_argument("--model", type=str, required=True, help="模型检查点路径 (.pt)")
-    parser.add_argument("--fasta", type=str, required=True, help="FASTA文件路径")
-    parser.add_argument("--num-sequences", type=int, default=100, help="随机选取的序列数量（默认100）")
-    parser.add_argument("--output-dir", type=str, default="attribution_results", help="输出目录")
-    parser.add_argument("--freeze-transformer", action="store_true", help="冻结Transformer部分")
-    parser.add_argument("--max-len", type=int, default=2048, help="模型最大序列长度（默认2048）")
-    parser.add_argument("--label-interval", type=int, default=10, help="横坐标位置编号显示间隔（例如10表示每隔10个位置显示一个数字，默认10）")
-    parser.add_argument("--seed", type=int, default=42, help="随机种子，用于可复现的抽样（默认42）")
-    parser.add_argument("--max-length-filter", type=int, default=2048, help="只分析长度 <= 该值的序列（默认500 bp）")
+    parser = argparse.ArgumentParser(description="Attribution Analysis - Integrated Gradients only, X-axis shows position numbers, no base labels, no position annotations")
+    parser.add_argument("--model", type=str, required=True, help="Model checkpoint path (.pt)")
+    parser.add_argument("--fasta", type=str, required=True, help="FASTA file path")
+    parser.add_argument("--num-sequences", type=int, default=100, help="Number of randomly selected sequences (default: 100)")
+    parser.add_argument("--output-dir", type=str, default="attribution_results", help="Output directory")
+    parser.add_argument("--freeze-transformer", action="store_true", help="Freeze Transformer part")
+    parser.add_argument("--max-len", type=int, default=2048, help="Model maximum sequence length (default: 2048)")
+    parser.add_argument("--label-interval", type=int, default=10, help="X-axis position number display interval (e.g., 10 means show a number every 10 positions, default: 10)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducible sampling (default: 42)")
+    parser.add_argument("--max-length-filter", type=int, default=2048, help="Only analyze sequences with length <= this value (default: 500 bp)")
     args = parser.parse_args()
 
-    # 设置随机种子
+    # Set random seed
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    print("\n🚀 启动归因分析（仅积分梯度归因，横坐标显示位置编号，不显示碱基标签）")
-    print(f"🎲 随机种子: {args.seed}")
-    print(f"✂️  序列长度过滤阈值: ≤ {args.max_length_filter} bp")
+    print("\n🚀 Starting attribution analysis (Integrated Gradients only, X-axis shows position numbers, no base labels)")
+    print(f"🎲 Random seed: {args.seed}")
+    print(f"✂️  Sequence length filter threshold: ≤ {args.max_length_filter} bp")
 
     model = load_model(args.model, freeze_transformer=args.freeze_transformer, override_max_len=args.max_len)
 
-    # 读取 FASTA 中的所有序列
-    print(f"\n📖 加载FASTA: {args.fasta}")
+    # Read all sequences from FASTA
+    print(f"\n📖 Loading FASTA: {args.fasta}")
     all_records = list(SeqIO.parse(args.fasta, "fasta"))
     total = len(all_records)
-    print(f"  文件中总序列数: {total}")
+    print(f"  Total sequences in file: {total}")
 
-    # 过滤长度
+    # Filter by length
     filtered_records = [r for r in all_records if len(r.seq) <= args.max_length_filter]
     filtered_total = len(filtered_records)
-    print(f"  长度 ≤ {args.max_length_filter} bp 的序列数: {filtered_total}")
+    print(f"  Sequences with length ≤ {args.max_length_filter} bp: {filtered_total}")
 
     if filtered_total == 0:
-        print(f"❌ 错误: 没有符合条件的序列（长度 ≤ {args.max_length_filter} bp），请调整 --max-length-filter 参数。")
+        print(f"❌ Error: No sequences meet the criteria (length ≤ {args.max_length_filter} bp). Please adjust --max-length-filter parameter.")
         return
 
-    # 随机抽取
+    # Random sampling
     n_sample = min(args.num_sequences, filtered_total)
     if n_sample < args.num_sequences:
-        print(f"  ⚠️ 请求 {args.num_sequences} 条序列，但符合条件的仅有 {filtered_total} 条，将全部使用")
+        print(f"  ⚠️ Requested {args.num_sequences} sequences, but only {filtered_total} meet the criteria. Using all available.")
     selected_records = random.sample(filtered_records, n_sample)
 
     sequences = [str(record.seq).upper() for record in selected_records]
     names = [record.id for record in selected_records]
 
-    print(f"  最终选取 {len(sequences)} 条序列进行分析:")
+    print(f"  Selected {len(sequences)} sequences for analysis:")
     for i, name in enumerate(names):
         print(f"    [{i+1}] {name} ({len(sequences[i])} bp)")
 
     analyzer = AttributionAnalyzer(model, output_dir=args.output_dir, label_interval=args.label_interval)
 
-    # 批量分析，带进度条
+    # Batch analysis with progress bar
     if HAS_TQDM:
-        iterator = tqdm(zip(sequences, names), total=len(sequences), desc="分析进度")
+        iterator = tqdm(zip(sequences, names), total=len(sequences), desc="Analysis progress")
     else:
         iterator = zip(sequences, names)
-        print(f"\n开始分析 {len(sequences)} 条序列...")
+        print(f"\nStarting analysis of {len(sequences)} sequences...")
 
     for seq, name in iterator:
         try:
             analyzer.analyze_sequence(seq, name)
         except Exception as e:
-            print(f"\n  ❌ 序列 {name} 分析失败: {e}")
+            print(f"\n  ❌ Analysis failed for sequence {name}: {e}")
             if not HAS_TQDM:
                 import traceback
                 traceback.print_exc()
 
-    print(f"\n✅ 批量分析完成！结果保存在: {os.path.abspath(args.output_dir)}")
+    print(f"\n✅ Batch analysis completed! Results saved to: {os.path.abspath(args.output_dir)}")
 
 if __name__ == "__main__":
     main()

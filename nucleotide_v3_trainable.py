@@ -1,6 +1,6 @@
 """
-完全可训练的 Nucleotide Transformer v3 (NTv3_8M_pre) 嵌入层
-支持冻结NTv3参数，内部配置只解冻deconv_tower_blocks模块
+Fully Trainable Nucleotide Transformer v3 (NTv3_8M_pre) Embedding Layer
+Supports freezing NTv3 parameters, internal configuration only unfreezes deconv_tower_blocks module
 """
 
 import torch
@@ -17,17 +17,17 @@ warnings.filterwarnings("ignore")
 
 
 class NTv3TrainableEmbedding(nn.Module):
-    """NTv3_8M_pre 可训练嵌入层，内部配置只解冻deconv_tower_blocks"""
+    """NTv3_8M_pre trainable embedding layer, internal configuration only unfreezes deconv_tower_blocks"""
     
     def __init__(
         self,
         model_repo: str = "InstaDeepAI/NTv3_8M_pre",
-        output_dim: int = 256,  # 输出到Mamba的维度
-        max_seq_len: int = 2048,  # DNA碱基数量
-        use_cache: bool = False,  # 强制禁用缓存以确保维度一致
+        output_dim: int = 256,  # Dimension to output to Mamba
+        max_seq_len: int = 2048,  # Number of DNA bases
+        use_cache: bool = False,  # Force disable caching to ensure dimension consistency
         device: Optional[str] = None,
         trust_remote_code: bool = True,
-        freeze_transformer: bool = False  # 是否冻结NTv3参数
+        freeze_transformer: bool = False  # Whether to freeze NTv3 parameters
     ):
         super().__init__()
         
@@ -36,82 +36,82 @@ class NTv3TrainableEmbedding(nn.Module):
         self.max_seq_len = max_seq_len
         self.use_cache = use_cache
         self.trust_remote_code = trust_remote_code
-        self.freeze_transformer = freeze_transformer  # 存储冻结状态
+        self.freeze_transformer = freeze_transformer  # Store freeze state
         
-        # 内部配置：只解冻deconv_tower_blocks模块
-        # 可以在这里修改要解冻的模块
+        # Internal configuration: only unfreeze deconv_tower_blocks module
+        # You can modify which modules to unfreeze here
         self._unfreeze_target_modules = ["deconv_tower_blocks"]
         
-        # 自动选择设备
+        # Auto-select device
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             self.device = torch.device(device)
         
-        print(f"🔍 加载Nucleotide Transformer v3: {model_repo}")
-        print(f"  设备: {self.device}")
-        print(f"  远程代码信任: {trust_remote_code}")
-        print(f"  最大序列长度: {max_seq_len}")
-        print(f"  冻结NTv3: {freeze_transformer}")
+        print(f"🔍 Loading Nucleotide Transformer v3: {model_repo}")
+        print(f"  Device: {self.device}")
+        print(f"  Trust remote code: {trust_remote_code}")
+        print(f"  Maximum sequence length: {max_seq_len}")
+        print(f"  Freeze NTv3: {freeze_transformer}")
         
         try:
-            # 1. 加载tokenizer
+            # 1. Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 model_repo,
                 trust_remote_code=trust_remote_code
             )
             
-            # 打印tokenizer信息
-            print(f"  Tokenizer词汇表大小: {len(self.tokenizer)}")
-            print(f"  填充token: {self.tokenizer.pad_token} (ID: {self.tokenizer.pad_token_id})")
+            # Print tokenizer information
+            print(f"  Tokenizer vocabulary size: {len(self.tokenizer)}")
+            print(f"  Padding token: {self.tokenizer.pad_token} (ID: {self.tokenizer.pad_token_id})")
             
-            # 2. 加载完整模型
+            # 2. Load full model
             self.model = AutoModelForMaskedLM.from_pretrained(
                 model_repo,
                 trust_remote_code=trust_remote_code
             ).to(self.device)
             
-            print(f"✅ 模型加载成功")
+            print(f"✅ Model loaded successfully")
             
-            # NTv3_8M_pre的隐藏层维度是256
+            # NTv3_8M_pre hidden layer dimension is 256
             self.hidden_size = 256
-            print(f"  NTv3隐藏层大小: {self.hidden_size} (固定)")
+            print(f"  NTv3 hidden size: {self.hidden_size} (fixed)")
 
-            # 打印简单结构
+            # Print basic structure
             self.print_basic_info()
 
-            # 根据freeze_transformer参数设置模型参数是否可训练
+            # Set whether model parameters are trainable based on freeze_transformer parameter
             if self.freeze_transformer:
-                # 冻结参数
+                # Freeze parameters
                 for param in self.model.parameters():
                     param.requires_grad = False
                 
-                # 然后解冻指定的模块
+                # Then unfreeze specified modules
                 if self._unfreeze_target_modules:
                     self._unfreeze_specific_modules()
-                    print(f"  🔥 已解冻指定模块: {self._unfreeze_target_modules}")
+                    print(f"  🔥 Unfrozen specified modules: {self._unfreeze_target_modules}")
                 else:
-                    print(f"  ❄️  NTv3模型参数已冻结")
+                    print(f"  ❄️  NTv3 model parameters frozen")
             else:
-                print(f"  🔥 NTv3模型参数可训练（完全微调）")
+                print(f"  🔥 NTv3 model parameters trainable (fully fine-tuned)")
             
-            # 模型架构信息
-            print(f"📋 模型架构: U-Net style conv tower → Transformer stack → deconv tower → LM head")
-            print(f"  输入要求: 序列长度必须是128的倍数")
+            # Model architecture information
+            print(f"📋 Model architecture: U-Net style conv tower → Transformer stack → deconv tower → LM head")
+            print(f"  Input requirement: Sequence length must be multiple of 128")
             
         except Exception as e:
-            print(f"❌ 加载模型失败: {e}")
+            print(f"❌ Failed to load model: {e}")
             raise
         
-        # 缓存系统（禁用，以确保特征维度一致）
-        self.cache = None  # 强制禁用缓存
+        # Cache system (disabled to ensure feature dimension consistency)
+        self.cache = None  # Force disable cache
         self.cache_hits = 0
         self.cache_misses = 0
         
-        # 自适应池化层：将模型输出统一到固定长度
+        # Adaptive pooling layer: unify model output to fixed length
         self.adaptive_pool = nn.AdaptiveAvgPool1d(max_seq_len)
         
-        # 投影层：将模型输出投影到我们需要的维度
+        # Projection layer: project model output to our required dimension
         if self.hidden_size != output_dim:
             self.feature_projection = nn.Sequential(
                 nn.Linear(self.hidden_size, output_dim),
@@ -119,191 +119,191 @@ class NTv3TrainableEmbedding(nn.Module):
                 nn.GELU(),
                 nn.Dropout(0.1)
             ).to(self.device)
-            print(f"  启用投影层: {self.hidden_size} -> {output_dim}")
+            print(f"  Projection layer enabled: {self.hidden_size} -> {output_dim}")
         else:
             self.feature_projection = nn.Identity()
-            print(f"  无投影层 (隐藏层={output_dim})")
+            print(f"  No projection layer (hidden layer={output_dim})")
         
-        print(f"📊 NTv3嵌入配置:")
-        print(f"  模型仓库: {model_repo}")
-        print(f"  原始隐藏大小: {self.hidden_size}")
-        print(f"  输出维度: {output_dim}")
-        print(f"  最大序列长度(碱基): {max_seq_len}")
-        print(f"  使用缓存: {use_cache}")
-        print(f"  冻结参数: {freeze_transformer}")
+        print(f"📊 NTv3 embedding configuration:")
+        print(f"  Model repository: {model_repo}")
+        print(f"  Original hidden size: {self.hidden_size}")
+        print(f"  Output dimension: {output_dim}")
+        print(f"  Maximum sequence length (bases): {max_seq_len}")
+        print(f"  Use cache: {use_cache}")
+        print(f"  Freeze parameters: {freeze_transformer}")
         if self.freeze_transformer and self._unfreeze_target_modules:
-            print(f"  解冻模块: {self._unfreeze_target_modules}")
+            print(f"  Unfrozen modules: {self._unfreeze_target_modules}")
         
-        # 打印参数统计
+        # Print parameter statistics
         self.print_param_stats()
     
     def _unfreeze_specific_modules(self):
-        """解冻特定模块（内部方法）"""
+        """Unfreeze specific modules (internal method)"""
         if not self._unfreeze_target_modules:
             return
         
         total_unfrozen = 0
         
-        # 遍历所有模块
+        # Iterate through all modules
         for module_name in self._unfreeze_target_modules:
             module_found = False
             
-            # 递归搜索模块
+            # Recursively search modules
             for name, module in self.model.named_modules():
                 if module_name in name:
-                    # 找到模块，解冻其所有参数
+                    # Found module, unfreeze all its parameters
                     for param in module.parameters():
                         param.requires_grad = True
                         total_unfrozen += param.numel()
                     module_found = True
-                    print(f"    找到并解冻模块: {name}")
+                    print(f"    Found and unfrozen module: {name}")
             
             if not module_found:
-                print(f"  ⚠️  警告: 未找到模块 '{module_name}'")
+                print(f"  ⚠️  Warning: Module '{module_name}' not found")
         
-        print(f"  ✅ 总共解冻了 {total_unfrozen:,} 个参数")
+        print(f"  ✅ Total unfrozen parameters: {total_unfrozen:,}")
     
     def print_param_stats(self):
-        """打印参数统计信息"""
+        """Print parameter statistics"""
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         
-        # 按模块统计参数
-        print("\n📈 NTv3模块参数统计:")
+        # Count parameters by module
+        print("\n📈 NTv3 module parameter statistics:")
         print("-" * 40)
         
-        # 统计主要模块的参数
+        # Count parameters for main modules
         module_stats = {}
         for name, module in self.model.named_children():
             module_params = sum(p.numel() for p in module.parameters())
             if module_params > 0:
                 module_stats[name] = module_params
         
-        # 打印模块参数
+        # Print module parameters
         for module_name, params in module_stats.items():
             trainable = sum(p.numel() for p in getattr(self.model, module_name).parameters() if p.requires_grad)
-            status = "可训练" if trainable > 0 else "冻结"
-            print(f"  {module_name:20s}: {params:12,} 参数 ({status})")
+            status = "Trainable" if trainable > 0 else "Frozen"
+            print(f"  {module_name:20s}: {params:12,} parameters ({status})")
         
         print("-" * 40)
         
-        # 投影层参数
+        # Projection layer parameters
         proj_params = sum(p.numel() for p in self.feature_projection.parameters())
         
-        print(f"\n总计:")
-        print(f"  NTv3总参数: {total_params:,}")
-        print(f"  NTv3可训练: {trainable_params:,}")
-        print(f"  投影层参数: {proj_params:,}")
+        print(f"\nTotal:")
+        print(f"  NTv3 total parameters: {total_params:,}")
+        print(f"  NTv3 trainable: {trainable_params:,}")
+        print(f"  Projection layer parameters: {proj_params:,}")
         
         if total_params > 0:
             trainable_ratio = trainable_params / total_params * 100
-            print(f"  NTv3可训练比例: {trainable_ratio:.1f}%")
+            print(f"  NTv3 trainable ratio: {trainable_ratio:.1f}%")
     
     def _preprocess_sequence(self, sequence: str) -> str:
-        """预处理DNA序列 - 确保序列只包含有效字符"""
-        # 确保序列只包含有效字符
+        """Preprocess DNA sequence - ensure sequence only contains valid characters"""
+        # Ensure sequence only contains valid characters
         valid_chars = set('ACGTNacgtn')
         sequence = ''.join([c for c in sequence if c in valid_chars])
         
         if not sequence:
-            return 'N' * 100  # 返回最小长度序列
+            return 'N' * 100  # Return minimum length sequence
         
-        # 转换为大写
+        # Convert to uppercase
         return sequence.upper()
     
     def _tokenize_sequences(self, sequences: List[str]) -> torch.Tensor:
-        """tokenize序列 - 只返回input_ids"""
-        # 预处理所有序列（仅清理字符）
+        """Tokenize sequences - return only input_ids"""
+        # Preprocess all sequences (only clean characters)
         processed_seqs = [self._preprocess_sequence(seq) for seq in sequences]
         
-        # 使用tokenizer进行tokenization和padding
+        # Use tokenizer for tokenization and padding
         batch = self.tokenizer(
             processed_seqs,
-            add_special_tokens=False,  # 不添加特殊token
-            padding=True,  # 启用padding
-            pad_to_multiple_of=128,  # 填充到128的倍数
-            max_length=self.max_seq_len,  # 最大长度
-            truncation=True,  # 超过长度则截断
+            add_special_tokens=False,  # Don't add special tokens
+            padding=True,  # Enable padding
+            pad_to_multiple_of=128,  # Pad to multiple of 128
+            max_length=self.max_seq_len,  # Maximum length
+            truncation=True,  # Truncate if exceeding length
             return_tensors="pt"
         )
         
-        # 只返回input_ids
+        # Return only input_ids
         input_ids = batch['input_ids']
         
         return input_ids
     
     def _process_model_output(self, features: torch.Tensor) -> torch.Tensor:
-        """处理模型输出，使用自适应池化统一特征长度"""
+        """Process model output, use adaptive pooling to unify feature length"""
         batch_size, seq_len, hidden_dim = features.shape
         
-        # NTv3输出特征长度可能不是max_seq_len，需要进行统一
+        # NTv3 output feature length may not be max_seq_len, need to unify
         if seq_len != self.max_seq_len:
-            # 使用自适应平均池化统一到max_seq_len长度
-            # 首先转置维度: [batch_size, seq_len, hidden_dim] -> [batch_size, hidden_dim, seq_len]
+            # Use adaptive average pooling to unify to max_seq_len length
+            # First transpose dimensions: [batch_size, seq_len, hidden_dim] -> [batch_size, hidden_dim, seq_len]
             features_t = features.transpose(1, 2)
             
-            # 自适应池化到max_seq_len长度
+            # Adaptive pooling to max_seq_len length
             features_pooled = self.adaptive_pool(features_t)
             
-            # 转置回来: [batch_size, hidden_dim, max_seq_len] -> [batch_size, max_seq_len, hidden_dim]
+            # Transpose back: [batch_size, hidden_dim, max_seq_len] -> [batch_size, max_seq_len, hidden_dim]
             features = features_pooled.transpose(1, 2)
             
-            # 验证现在长度是否正确
+            # Verify length is now correct
             new_seq_len = features.shape[1]
             if new_seq_len != self.max_seq_len:
-                print(f"⚠️  自适应池化后长度仍不匹配: {new_seq_len} != {self.max_seq_len}")
+                print(f"⚠️  Length still mismatched after adaptive pooling: {new_seq_len} != {self.max_seq_len}")
         
-        # 投影到目标维度
+        # Project to target dimension
         features = self.feature_projection(features)
         
         return features
     
     def extract_features(self, sequences: List[str], training_mode: bool = True) -> torch.Tensor:
         """
-        提取特征 - 不使用缓存，确保维度一致
+        Extract features - no cache usage, ensure dimension consistency
         
         Args:
-            sequences: DNA序列列表
-            training_mode: 是否为训练模式
+            sequences: List of DNA sequences
+            training_mode: Whether in training mode
         """
         if not sequences:
             return torch.empty(0, self.max_seq_len, self.output_dim, device=self.device)
         
-        # Tokenize所有序列
+        # Tokenize all sequences
         input_ids = self._tokenize_sequences(sequences)
         input_ids = input_ids.to(self.device)
         
-        # 根据冻结状态和训练模式决定是否计算梯度
-        # 检查是否有任何参数需要梯度
+        # Decide whether to compute gradients based on freeze state and training mode
+        # Check if any parameters require gradients
         has_trainable_params = any(p.requires_grad for p in self.model.parameters())
         
         if training_mode and has_trainable_params:
-            # 训练模式且NTv3有可训练参数：计算梯度
+            # Training mode and NTv3 has trainable parameters: compute gradients
             outputs = self.model(input_ids=input_ids, output_hidden_states=True)
         else:
-            # 评估模式或NTv3已冻结：不计算梯度
+            # Evaluation mode or NTv3 frozen: do not compute gradients
             with torch.no_grad():
                 outputs = self.model(input_ids=input_ids, output_hidden_states=True)
         
-        # 提取特征：使用最后一层隐藏状态
+        # Extract features: use last layer hidden states
         hidden_states = outputs.hidden_states
         features = hidden_states[-1]  # [batch_size, seq_len, hidden_size]
         
-        # 处理特征，使用自适应池化确保维度一致
+        # Process features, use adaptive pooling to ensure dimension consistency
         features = self._process_model_output(features)
         
         return features
     
     def forward(self, sequences: List[str], training_mode: bool = True) -> torch.Tensor:
-        """前向传播"""
+        """Forward pass"""
         return self.extract_features(sequences, training_mode=training_mode)
     
     def clear_cache(self):
-        """清空缓存"""
-        print("ℹ️  缓存已禁用")
+        """Clear cache"""
+        print("ℹ️  Cache disabled")
     
     def get_cache_stats(self) -> Dict[str, Any]:
-        """获取缓存统计"""
+        """Get cache statistics"""
         return {
             'cache_enabled': False,
             'cache_size': 0,
@@ -311,7 +311,7 @@ class NTv3TrainableEmbedding(nn.Module):
         }
     
     def get_model_info(self) -> Dict[str, Any]:
-        """获取模型信息"""
+        """Get model information"""
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         
@@ -335,115 +335,115 @@ class NTv3TrainableEmbedding(nn.Module):
         }
     
     def print_model_summary(self):
-        """打印模型摘要"""
+        """Print model summary"""
         info = self.get_model_info()
-        print(f"🧬 NTv3嵌入模型摘要")
+        print(f"🧬 NTv3 Embedding Model Summary")
         print(f"  =========================================")
-        print(f"  模型仓库: {info['model_repo']}")
-        print(f"  词汇表大小: {info['vocab_size']}")
-        print(f"  隐藏层大小: {info['hidden_size']} (NTv3_8M_pre)")
-        print(f"  输出维度: {info['output_dim']}")
-        print(f"  最大序列长度: {info['max_seq_len']}")
-        print(f"  冻结NTv3: {info['freeze_transformer']}")
+        print(f"  Model repository: {info['model_repo']}")
+        print(f"  Vocabulary size: {info['vocab_size']}")
+        print(f"  Hidden size: {info['hidden_size']} (NTv3_8M_pre)")
+        print(f"  Output dimension: {info['output_dim']}")
+        print(f"  Maximum sequence length: {info['max_seq_len']}")
+        print(f"  Freeze NTv3: {info['freeze_transformer']}")
         if info['freeze_transformer'] and info['unfreeze_modules']:
-            print(f"  解冻模块: {info['unfreeze_modules']}")
-        print(f"  总参数量: {info['total_params']:,}")
-        print(f"  可训练参数量: {info['trainable_params']:,}")
+            print(f"  Unfrozen modules: {info['unfreeze_modules']}")
+        print(f"  Total parameters: {info['total_params']:,}")
+        print(f"  Trainable parameters: {info['trainable_params']:,}")
         if info['total_params'] > 0:
             trainable_ratio = info['trainable_params'] / info['total_params'] * 100
-            print(f"  可训练比例: {trainable_ratio:.1f}%")
+            print(f"  Trainable ratio: {trainable_ratio:.1f}%")
         print(f"  =========================================")
     
     def set_freeze_state(self, freeze: bool):
-        """动态设置冻结状态"""
+        """Dynamically set freeze state"""
         if freeze != self.freeze_transformer:
             self.freeze_transformer = freeze
             
             if freeze:
-                # 冻结所有参数
+                # Freeze all parameters
                 for param in self.model.parameters():
                     param.requires_grad = False
                 
-                # 然后解冻指定模块
+                # Then unfreeze specified modules
                 if self._unfreeze_target_modules:
                     self._unfreeze_specific_modules()
             else:
-                # 解冻所有参数
+                # Unfreeze all parameters
                 for param in self.model.parameters():
                     param.requires_grad = True
             
-            state = "冻结" if freeze else "解冻"
-            print(f"🔄 NTv3参数已{state}")
+            state = "Frozen" if freeze else "Unfrozen"
+            print(f"🔄 NTv3 parameters {state}")
             if freeze and self._unfreeze_target_modules:
-                print(f"  解冻模块: {self._unfreeze_target_modules}")
+                print(f"  Unfrozen modules: {self._unfreeze_target_modules}")
             
             self.print_param_stats()
     
     def set_unfreeze_modules(self, modules: List[str]):
-        """动态设置要解冻的模块（内部使用）"""
+        """Dynamically set modules to unfreeze (internal use)"""
         self._unfreeze_target_modules = modules
         if self.freeze_transformer:
-            print(f"🔄 更新解冻模块: {modules}")
-            # 重新应用冻结/解冻状态
+            print(f"🔄 Updated unfrozen modules: {modules}")
+            # Reapply freeze/unfreeze state
             self.set_freeze_state(self.freeze_transformer)
 
     def print_basic_info(self):
-        """打印简化的NTv3网络层结构"""
-        print("🧬 NTv3网络层结构 (简化版)")
+        """Print simplified NTv3 network layer structure"""
+        print("🧬 NTv3 Network Layer Structure (Simplified)")
         print("=" * 50)
         
-        print(f"模型类型: {type(self.model).__name__}")
-        print(f"隐藏层大小: {self.hidden_size}")
-        print(f"输出维度: {self.output_dim}")
+        print(f"Model type: {type(self.model).__name__}")
+        print(f"Hidden size: {self.hidden_size}")
+        print(f"Output dimension: {self.output_dim}")
         
-        print("\n主要模块:")
+        print("\nMain modules:")
         print("-" * 30)
         
-        # 只打印主要模块
+        # Only print main modules
         for name, module in self.model.named_children():
             num_params = sum(p.numel() for p in module.parameters())
             num_params_str = f"{num_params:,}" if num_params > 0 else "0"
             
-            # 检查是否有子模块
+            # Check if there are child modules
             children = list(module.children())
             if children:
-                print(f"├─ {name} ({type(module).__name__}): {num_params_str} 参数")
-                # 打印第一层子模块
+                print(f"├─ {name} ({type(module).__name__}): {num_params_str} parameters")
+                # Print first level child modules
                 for child_name, child_module in module.named_children():
                     child_params = sum(p.numel() for p in child_module.parameters())
                     if child_params > 0:
-                        print(f"│  └─ {child_name}: {child_params:,} 参数")
+                        print(f"│  └─ {child_name}: {child_params:,} parameters")
             else:
-                print(f"└─ {name}: {num_params_str} 参数")
+                print(f"└─ {name}: {num_params_str} parameters")
         
-        print("\n参数统计:")
+        print("\nParameter statistics:")
         print("-" * 30)
         total_params = sum(p.numel() for p in self.model.parameters())
         trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         
-        print(f"总参数: {total_params:,}")
-        print(f"可训练: {trainable_params:,}")
-        print(f"冻结: {total_params - trainable_params:,}")
+        print(f"Total parameters: {total_params:,}")
+        print(f"Trainable: {trainable_params:,}")
+        print(f"Frozen: {total_params - trainable_params:,}")
         
         print("=" * 50)
         
-        # 显示内部配置
+        # Display internal configuration
         if self.freeze_transformer and self._unfreeze_target_modules:
-            print(f"内部配置: 冻结NTv3，只解冻 {self._unfreeze_target_modules} 模块")
+            print(f"Internal configuration: NTv3 frozen, only unfreeze {self._unfreeze_target_modules} modules")
         elif self.freeze_transformer:
-            print(f"内部配置: 冻结NTv3所有参数")
+            print(f"Internal configuration: NTv3 all parameters frozen")
         else:
-            print(f"内部配置: 完全解冻NTv3")
+            print(f"Internal configuration: NTv3 fully unfrozen")
 
 
-# 工厂函数
+# Factory function
 def create_ntv3_trainable_embedding(config: dict) -> NTv3TrainableEmbedding:
-    """创建NTv3完全可训练嵌入层"""
+    """Create NTv3 fully trainable embedding layer"""
     return NTv3TrainableEmbedding(
         model_repo=config.get('transformer_model_repo', 'InstaDeepAI/NTv3_8M_pre'),
         output_dim=config.get('embedding_dim', 256),
         max_seq_len=config.get('max_seq_len', 2048),
-        use_cache=config.get('use_caching', False),  # 强制禁用缓存
+        use_cache=config.get('use_caching', False),  # Force disable cache
         device=config.get('device', None),
         trust_remote_code=config.get('trust_remote_code', True),
         freeze_transformer=config.get('freeze_transformer', False)

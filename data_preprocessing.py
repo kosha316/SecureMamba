@@ -1,5 +1,5 @@
 """
-数据预处理模块 - 处理FASTA文件，替换简并碱基，生成序列片段，并添加下采样
+Data Preprocessing Module - Process FASTA files, replace degenerate bases, generate sequence fragments, and add downsampling
 """
 
 import torch
@@ -11,7 +11,7 @@ from collections import defaultdict
 from typing import List, Dict, Tuple, Optional
 import pickle
 
-# 简并碱基映射表（IUPAC标准）
+# Degenerate base mapping table (IUPAC standard)
 degenerate_base_map = {
     'A': ['A'], 'T': ['T'], 'C': ['C'], 'G': ['G'],
     'M': ['A', 'C'], 'R': ['A', 'G'], 'W': ['A', 'T'],
@@ -23,7 +23,7 @@ degenerate_base_map = {
 
 
 def replace_degenerate_bases(seq: str) -> str:
-    """将序列中的简并碱基替换为对应的标准碱基（随机选择）"""
+    """Replace degenerate bases in the sequence with corresponding standard bases (random selection)"""
     cleaned = []
     for base in seq.upper():
         possible_bases = degenerate_base_map.get(base)
@@ -35,15 +35,15 @@ def replace_degenerate_bases(seq: str) -> str:
 
 
 def load_fasta_sequences(fasta_path: str, label: int) -> List[Dict]:
-    """加载FASTA序列，替换简并碱基，并过滤"""
+    """Load FASTA sequences, replace degenerate bases, and filter"""
     records = []
     try:
         for rec in SeqIO.parse(fasta_path, "fasta"):
             raw_seq = str(rec.seq)
             processed_seq = replace_degenerate_bases(raw_seq)
             
-            # 过滤长度过短的序列
-            if len(processed_seq) >= 3:  # 最小长度，确保至少一个密码子
+            # Filter sequences that are too short
+            if len(processed_seq) >= 3:  # Minimum length, ensure at least one codon
                 records.append({
                     "id": rec.id,
                     "seq_str": processed_seq,
@@ -53,12 +53,12 @@ def load_fasta_sequences(fasta_path: str, label: int) -> List[Dict]:
                 })
         return records
     except Exception as e:
-        print(f"❌ 加载FASTA文件失败：{fasta_path}, 错误：{str(e)}")
+        print(f"❌ Failed to load FASTA file: {fasta_path}, Error: {str(e)}")
         return []
 
 
 def generate_sequence_segments(full_seqs: List[Dict], max_length: int, min_length: int) -> List[Dict]:
-    """将长序列切割成固定长度的片段"""
+    """Cut long sequences into fixed-length fragments"""
     segments = []
     
     for full_seq in full_seqs:
@@ -71,21 +71,21 @@ def generate_sequence_segments(full_seqs: List[Dict], max_length: int, min_lengt
         seg_idx = 0
         
         while start < orig_len:
-            # 计算当前片段的结束位置
+            # Calculate the end position of the current fragment
             end = min(start + max_length, orig_len)
             
-            # 确保长度是3的倍数（密码子要求）
+            # Ensure length is a multiple of 3 (codon requirement)
             remainder = (end - start) % 3
             if remainder != 0:
                 end -= remainder
             
-            # 如果调整后的结束位置小于等于起始位置，说明无法形成有效片段
+            # If adjusted end position is less than or equal to start, cannot form a valid fragment
             if end <= start:
                 break
                 
             seg_len = end - start
             
-            # 如果片段长度满足最小要求，添加到结果中
+            # If fragment length meets minimum requirement, add to results
             if seg_len >= min_length:
                 segments.append({
                     "segment_id": f"{orig_id}_seg{seg_idx}",
@@ -97,10 +97,10 @@ def generate_sequence_segments(full_seqs: List[Dict], max_length: int, min_lengt
                 })
                 seg_idx += 1
             
-            # 更新起始位置，准备处理下一段
+            # Update start position, prepare for next segment
             start = end
             
-            # 如果剩余序列长度小于最小长度，跳出循环
+            # If remaining sequence length is less than minimum length, break out of loop
             if orig_len - start < min_length:
                 break
     
@@ -108,7 +108,7 @@ def generate_sequence_segments(full_seqs: List[Dict], max_length: int, min_lengt
 
 
 def remove_duplicate_segments(segments: List[Dict]) -> Tuple[List[Dict], int]:
-    """移除重复的序列片段"""
+    """Remove duplicate sequence fragments"""
     seen_seqs = set()
     unique_segs = []
     dup_count = 0
@@ -127,132 +127,132 @@ def remove_duplicate_segments(segments: List[Dict]) -> Tuple[List[Dict], int]:
 def downsample_negative_segments(segments: List[Dict], seed: int = 42, 
                                 downsample_ratio: float = 3.0) -> List[Dict]:
     """
-    对非致病片段进行下采样，使其数量约为致病片段的指定倍数
+    Downsample non-pathogenic fragments to approximately the specified multiple of pathogenic fragments
     
     Args:
-        segments: 所有片段列表
-        seed: 随机种子
-        downsample_ratio: 下采样比例，非致病片段数量/致病片段数量
+        segments: List of all fragments
+        seed: Random seed
+        downsample_ratio: Downsampling ratio, non-pathogenic fragment count / pathogenic fragment count
     
     Returns:
-        下采样后的片段列表
+        Downsampled fragment list
     """
-    # 按标签分离片段
+    # Separate fragments by label
     positive_segments = [seg for seg in segments if seg['label'] == 1]
     negative_segments = [seg for seg in segments if seg['label'] == 0]
     
     positive_count = len(positive_segments)
     negative_count = len(negative_segments)
     
-    print(f"📊 下采样前统计:")
-    print(f"  - 致病片段: {positive_count}")
-    print(f"  - 非致病片段: {negative_count}")
-    print(f"  - 非致病:致病比例: {negative_count/positive_count:.2f}:1")
+    print(f"📊 Pre-downsampling statistics:")
+    print(f"  - Pathogenic fragments: {positive_count}")
+    print(f"  - Non-pathogenic fragments: {negative_count}")
+    print(f"  - Non-pathogenic:Pathogenic ratio: {negative_count/positive_count:.2f}:1")
     
-    # 如果非致病片段数量已经少于或等于目标数量，则全部保留
+    # If non-pathogenic fragment count is already less than or equal to target count, keep all
     target_negative_count = int(positive_count * downsample_ratio)
     
     if negative_count <= target_negative_count:
-        print(f"⚠️  非致病片段数量({negative_count})已经小于或等于目标数量({target_negative_count})，跳过下采样")
+        print(f"⚠️  Non-pathogenic fragment count ({negative_count}) is already less than or equal to target ({target_negative_count}), skipping downsampling")
         return segments
     
-    # 设置随机种子以确保可重复性
+    # Set random seed for reproducibility
     random.seed(seed)
     np.random.seed(seed)
     
-    # 随机采样目标数量的非致病片段
+    # Randomly sample target number of non-pathogenic fragments
     sampled_negative_segments = random.sample(negative_segments, target_negative_count)
     
-    # 合并致病片段和采样后的非致病片段
+    # Merge pathogenic fragments and sampled non-pathogenic fragments
     downsampled_segments = positive_segments + sampled_negative_segments
     
-    # 可选：打乱顺序（保持随机性但可重复）
+    # Optional: Shuffle order (maintain randomness but reproducible)
     random.shuffle(downsampled_segments)
     
-    print(f"✅ 下采样完成:")
-    print(f"  - 采样后致病片段: {positive_count}")
-    print(f"  - 采样后非致病片段: {len(sampled_negative_segments)}")
-    print(f"  - 采样后非致病:致病比例: {len(sampled_negative_segments)/positive_count:.2f}:1")
-    print(f"  - 移除的非致病片段: {negative_count - target_negative_count}")
+    print(f"✅ Downsampling completed:")
+    print(f"  - Pathogenic fragments after sampling: {positive_count}")
+    print(f"  - Non-pathogenic fragments after sampling: {len(sampled_negative_segments)}")
+    print(f"  - Non-pathogenic:Pathogenic ratio after sampling: {len(sampled_negative_segments)/positive_count:.2f}:1")
+    print(f"  - Removed non-pathogenic fragments: {negative_count - target_negative_count}")
     
     return downsampled_segments
 
 
 def preprocess_data(config) -> List[Dict]:
     """
-    主预处理函数：加载FASTA文件，替换简并碱基，生成片段，去重，下采样
+    Main preprocessing function: Load FASTA files, replace degenerate bases, generate fragments, deduplicate, downsample
     
     Args:
-        config: 配置对象（需包含downsample_ratio属性）
+        config: Configuration object (must include downsample_ratio attribute)
         
     Returns:
-        预处理后的片段列表
+        List of preprocessed fragments
     """
-    print(f"\n🔄 数据预处理开始")
+    print(f"\n🔄 Starting data preprocessing")
     
-    # 检查文件是否存在
+    # Check if files exist
     if not os.path.exists(config.positive_fasta):
-        print(f"⚠️  正样本文件不存在：{config.positive_fasta}")
+        print(f"⚠️  Positive sample file does not exist: {config.positive_fasta}")
         return []
     
     if not os.path.exists(config.negative_fasta):
-        print(f"⚠️  负样本文件不存在：{config.negative_fasta}")
+        print(f"⚠️  Negative sample file does not exist: {config.negative_fasta}")
         return []
     
-    # 1. 加载并处理原始序列
-    print("📥 加载正样本序列...")
+    # 1. Load and process original sequences
+    print("📥 Loading positive sample sequences...")
     positive_seqs = load_fasta_sequences(config.positive_fasta, label=1)
     
-    print("📥 加载负样本序列...")
+    print("📥 Loading negative sample sequences...")
     negative_seqs = load_fasta_sequences(config.negative_fasta, label=0)
     
     all_seqs = positive_seqs + negative_seqs
-    print(f"✅ 加载完成：正样本 {len(positive_seqs)} 条，负样本 {len(negative_seqs)} 条")
+    print(f"✅ Loading completed: {len(positive_seqs)} positive samples, {len(negative_seqs)} negative samples")
     
-    # 2. 生成片段
-    print("✂️  生成序列片段...")
+    # 2. Generate fragments
+    print("✂️  Generating sequence fragments...")
     all_segments = generate_sequence_segments(
         all_seqs, 
         max_length=config.max_seq_length,
         min_length=config.min_segment_len
     )
-    print(f"✅ 片段生成：共 {len(all_segments)} 个片段")
+    print(f"✅ Fragment generation: {len(all_segments)} fragments total")
     
-    # 3. 去重
-    print("🔄 移除重复片段...")
+    # 3. Deduplicate
+    print("🔄 Removing duplicate fragments...")
     unique_segments, dup_count = remove_duplicate_segments(all_segments)
-    print(f"✅ 去重完成：去重前 {len(all_segments)}，去重后 {len(unique_segments)}，移除 {dup_count}")
+    print(f"✅ Deduplication completed: {len(all_segments)} before, {len(unique_segments)} after, removed {dup_count}")
     
-    # 4. 下采样非致病片段
+    # 4. Downsample non-pathogenic fragments
     if hasattr(config, 'downsample_ratio') and config.downsample_ratio > 0:
-        print(f"\n📉 对非致病片段进行下采样（目标比例 非致病:致病 = {config.downsample_ratio}:1）...")
+        print(f"\n📉 Downsampling non-pathogenic fragments (target ratio non-pathogenic:pathogenic = {config.downsample_ratio}:1)...")
         downsampled_segments = downsample_negative_segments(
             unique_segments, 
-            seed=getattr(config, 'seed', 42),  # 使用配置中的随机种子，默认为42
+            seed=getattr(config, 'seed', 42),  # Use random seed from config, default to 42
             downsample_ratio=config.downsample_ratio
         )
         unique_segments = downsampled_segments
     
-    # 5. 统计信息
+    # 5. Statistics
     positive_count = sum(1 for seg in unique_segments if seg['label'] == 1)
     negative_count = len(unique_segments) - positive_count
     avg_length = sum(len(seg['original_seq']) for seg in unique_segments) / len(unique_segments) if unique_segments else 0
     
-    print(f"\n📊 最终预处理统计：")
-    print(f"  - 总片段数：{len(unique_segments)}")
-    print(f"  - 致病性片段：{positive_count} ({positive_count/len(unique_segments)*100:.1f}%)")
-    print(f"  - 非致病性片段：{negative_count} ({negative_count/len(unique_segments)*100:.1f}%)")
-    print(f"  - 非致病:致病比例：{negative_count/positive_count:.2f}:1" if positive_count > 0 else "  - 无致病片段")
-    print(f"  - 平均序列长度：{avg_length:.1f} bp")
+    print(f"\n📊 Final preprocessing statistics:")
+    print(f"  - Total fragments: {len(unique_segments)}")
+    print(f"  - Pathogenic fragments: {positive_count} ({positive_count/len(unique_segments)*100:.1f}%)")
+    print(f"  - Non-pathogenic fragments: {negative_count} ({negative_count/len(unique_segments)*100:.1f}%)")
+    print(f"  - Non-pathogenic:Pathogenic ratio: {negative_count/positive_count:.2f}:1" if positive_count > 0 else "  - No pathogenic fragments")
+    print(f"  - Average sequence length: {avg_length:.1f} bp")
     
     return unique_segments
 
 
 def save_preprocessed_data(segments: List[Dict], cache_path: str):
-    """保存预处理数据到缓存文件"""
+    """Save preprocessed data to cache file"""
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     
-    # 确保数据结构正确
+    # Ensure data structure is correct
     clean_segments = []
     for seg in segments:
         clean_seg = {
@@ -262,67 +262,67 @@ def save_preprocessed_data(segments: List[Dict], cache_path: str):
         }
         clean_segments.append(clean_seg)
     
-    # 保存为pickle文件
+    # Save as pickle file
     with open(cache_path, 'wb') as f:
         pickle.dump(clean_segments, f)
     
-    print(f"💾 预处理数据已保存到：{cache_path}")
+    print(f"💾 Preprocessed data saved to: {cache_path}")
     return cache_path
 
 
 def load_preprocessed_data(cache_path: str) -> List[Dict]:
-    """从缓存文件加载预处理数据"""
+    """Load preprocessed data from cache file"""
     if os.path.exists(cache_path):
         try:
             with open(cache_path, 'rb') as f:
                 segments = pickle.load(f)
-            print(f"✅ 从缓存加载预处理数据：{cache_path} ({len(segments)} 个片段)")
+            print(f"✅ Loaded preprocessed data from cache: {cache_path} ({len(segments)} fragments)")
             return segments
         except Exception as e:
-            print(f"❌ 缓存加载失败：{str(e)}")
+            print(f"❌ Cache loading failed: {str(e)}")
     return None
 
 
-# 测试函数
+# Test function
 if __name__ == "__main__":
-    print("🧪 测试数据预处理功能...")
+    print("🧪 Testing data preprocessing functionality...")
     
-    # 创建测试配置
+    # Create test configuration
     class TestConfig:
         positive_fasta = "test_positive.fasta"
         negative_fasta = "test_negative.fasta"
         max_seq_length = 300
         min_segment_len = 30
-        downsample_ratio = 3.0  # 非致病片段是致病片段的3倍
-        seed = 42  # 随机种子
+        downsample_ratio = 3.0  # Non-pathogenic fragments are 3x pathogenic fragments
+        seed = 42  # Random seed
     
     config = TestConfig()
     
-    # 测试简并碱基替换
+    # Test degenerate base replacement
     test_seq = "ATNGCATMRWSN"
     cleaned_seq = replace_degenerate_bases(test_seq)
-    print(f"简并碱基替换测试: {test_seq} -> {cleaned_seq}")
+    print(f"Degenerate base replacement test: {test_seq} -> {cleaned_seq}")
     
-    # 测试下采样函数
+    # Test downsampling function
     test_segments = [
         {"segment_id": f"pos_{i}", "original_seq": "ATCG"*10, "label": 1} for i in range(10)
     ] + [
         {"segment_id": f"neg_{i}", "original_seq": "GCTA"*10, "label": 0} for i in range(100)
     ]
     
-    print(f"\n测试下采样：10个致病片段，100个非致病片段")
+    print(f"\nTesting downsampling: 10 pathogenic fragments, 100 non-pathogenic fragments")
     downsampled = downsample_negative_segments(test_segments, seed=42, downsample_ratio=3.0)
     
     pos_count = sum(1 for seg in downsampled if seg['label'] == 1)
     neg_count = sum(1 for seg in downsampled if seg['label'] == 0)
-    print(f"下采样后：致病片段={pos_count}, 非致病片段={neg_count}, 比例={neg_count/pos_count}:1")
+    print(f"After downsampling: pathogenic fragments={pos_count}, non-pathogenic fragments={neg_count}, ratio={neg_count/pos_count}:1")
     
-    # 测试预处理流程
+    # Test preprocessing pipeline
     try:
         segments = preprocess_data(config)
         if segments:
-            print(f"预处理测试成功：生成 {len(segments)} 个片段")
+            print(f"Preprocessing test successful: generated {len(segments)} fragments")
     except Exception as e:
-        print(f"预处理测试失败：{e}")
+        print(f"Preprocessing test failed: {e}")
     
-    print("✅ 数据预处理测试完成")
+    print("✅ Data preprocessing test completed")

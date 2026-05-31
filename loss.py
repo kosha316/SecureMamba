@@ -3,11 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, List
 
-# 在 loss.py 中修复 TripletContrastiveLoss：
+# Fix TripletContrastiveLoss in loss.py:
 
 class TripletContrastiveLoss(nn.Module):
     """
-    修复的三元组对比损失
+    Fixed triplet contrastive loss
     """
     def __init__(self, margin=1.0, temperature=0.1):
         super().__init__()
@@ -15,63 +15,63 @@ class TripletContrastiveLoss(nn.Module):
         self.temperature = temperature
 
     def forward(self, 
-                anchor_feat: torch.Tensor,      # 原始序列特征 [batch_size, projection_dim]
-                positive_feats: List[torch.Tensor],  # 正样本特征列表
-                negative_feat: torch.Tensor     # 负样本特征 [batch_size, projection_dim]
+                anchor_feat: torch.Tensor,      # Original sequence features [batch_size, projection_dim]
+                positive_feats: List[torch.Tensor],  # List of positive sample features
+                negative_feat: torch.Tensor     # Negative sample features [batch_size, projection_dim]
                ) -> torch.Tensor:
         """
-        计算三元组对比损失
+        Calculate triplet contrastive loss
         """
         batch_size = anchor_feat.shape[0]
         total_loss = 0.0
         valid_pairs = 0
         
-        # 🔥 修复：检查维度一致性
+        # 🔥 Fix: Check dimension consistency
         if anchor_feat.dim() != 2 or negative_feat.dim() != 2:
             return torch.tensor(0.0, device=anchor_feat.device)
         
-        # 归一化特征
+        # Normalize features
         anchor_feat = F.normalize(anchor_feat, p=2, dim=1)
         negative_feat = F.normalize(negative_feat, p=2, dim=1)
         
-        # 计算锚点与负样本的相似度
+        # Calculate similarity between anchor and negative samples
         neg_similarity = F.cosine_similarity(anchor_feat, negative_feat)
         
         for i, positive_feat in enumerate(positive_feats):
             if positive_feat is None:
                 continue
                 
-            # 🔥 修复：检查正样本特征维度
+            # 🔥 Fix: Check positive sample feature dimensions
             if positive_feat.dim() != 2 or positive_feat.shape != anchor_feat.shape:
                 continue
                 
-            # 归一化正样本特征
+            # Normalize positive sample features
             positive_feat = F.normalize(positive_feat, p=2, dim=1)
             
-            # 计算锚点与正样本的相似度
+            # Calculate similarity between anchor and positive samples
             pos_similarity = F.cosine_similarity(anchor_feat, positive_feat)
             
-            # 计算三元组损失
+            # Calculate triplet loss
             try:
                 triplet_loss = F.triplet_margin_loss(
                     anchor_feat, positive_feat, negative_feat,
                     margin=self.margin, p=2, eps=1e-7
                 )
                 
-                # 计算InfoNCE风格的对比损失
+                # Calculate InfoNCE-style contrastive loss
                 pos_exp = torch.exp(pos_similarity / self.temperature)
                 neg_exp = torch.exp(neg_similarity / self.temperature)
                 
                 contrastive_loss = -torch.log(pos_exp / (pos_exp + neg_exp)).mean()
                 
-                # 组合两种损失
+                # Combine both losses
                 combined_loss = 0.7 * triplet_loss + 0.3 * contrastive_loss
                 
                 total_loss += combined_loss
                 valid_pairs += 1
                 
             except Exception as e:
-                print(f"⚠️ 三元组损失计算异常：{str(e)}")
+                print(f"⚠️ Triplet loss calculation error: {str(e)}")
                 continue
         
         if valid_pairs == 0:
@@ -81,7 +81,7 @@ class TripletContrastiveLoss(nn.Module):
 
 class HardTripletLoss(nn.Module):
     """
-    困难三元组损失：选择最难的正负样本对
+    Hard triplet loss: Select the hardest positive and negative sample pairs
     """
     def __init__(self, margin=1.0):
         super().__init__()
@@ -91,17 +91,18 @@ class HardTripletLoss(nn.Module):
                 positive_feats: List[torch.Tensor],
                 negative_feat: torch.Tensor) -> torch.Tensor:
         """
-        计算困难三元组损失
+        Calculate hard triplet loss
         
-        策略：选择最难的正样本（与锚点相似度最低）和最难的负样本（与锚点相似度最高）
+        Strategy: Select the hardest positive sample (lowest similarity to anchor) 
+                 and hardest negative sample (highest similarity to anchor)
         """
         batch_size = anchor_feat.shape[0]
         
-        # 归一化特征
+        # Normalize features
         anchor_feat = F.normalize(anchor_feat, p=2, dim=1)
         negative_feat = F.normalize(negative_feat, p=2, dim=1)
         
-        # 找到最难的正样本（相似度最低）
+        # Find the hardest positive sample (lowest similarity)
         min_pos_similarity = float('inf')
         hardest_positive = None
         
@@ -119,10 +120,10 @@ class HardTripletLoss(nn.Module):
         if hardest_positive is None:
             return torch.tensor(0.0, device=anchor_feat.device)
         
-        # 计算与负样本的相似度
+        # Calculate similarity with negative samples
         neg_similarity = F.cosine_similarity(anchor_feat, negative_feat)
         
-        # 计算困难三元组损失
+        # Calculate hard triplet loss
         hardest_loss = F.triplet_margin_loss(
             anchor_feat, hardest_positive, negative_feat,
             margin=self.margin, p=2, eps=1e-7
@@ -133,8 +134,8 @@ class HardTripletLoss(nn.Module):
 
 class VariantConsistencyLoss(nn.Module):
     """
-    变体一致性损失
-    确保变体分类预测与原始序列预测一致
+    Variant consistency loss
+    Ensure variant classification predictions are consistent with original sequence predictions
     """
     def __init__(self, consistency_type: str = "kl", temperature: float = 1.0):
         super().__init__()
@@ -148,39 +149,39 @@ class VariantConsistencyLoss(nn.Module):
         elif consistency_type == "js":  # Jensen-Shannon divergence
             self.criterion = self.js_divergence
         else:
-            raise ValueError(f"不支持的consistency_type: {consistency_type}")
+            raise ValueError(f"Unsupported consistency_type: {consistency_type}")
 
     def js_divergence(self, p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
-        """计算Jensen-Shannon散度"""
+        """Calculate Jensen-Shannon divergence"""
         m = 0.5 * (p + q)
         return 0.5 * (F.kl_div(F.log_softmax(p, dim=1), m, reduction='batchmean') + 
                      F.kl_div(F.log_softmax(q, dim=1), m, reduction='batchmean'))
 
     def forward(self, orig_pred: torch.Tensor, variant_pred: torch.Tensor) -> torch.Tensor:
         """
-        计算变体一致性损失
+        Calculate variant consistency loss
         
         Args:
-            orig_pred: 原始序列预测 [batch_size, num_classes]
-            variant_pred: 变体预测 [batch_size, num_classes]
+            orig_pred: Original sequence predictions [batch_size, num_classes]
+            variant_pred: Variant predictions [batch_size, num_classes]
             
         Returns:
-            一致性损失
+            Consistency loss
         """
         if self.consistency_type == "kl":
-            # 使用KL散度
+            # Use KL divergence
             orig_probs = F.log_softmax(orig_pred / self.temperature, dim=1)
             variant_probs = F.softmax(variant_pred / self.temperature, dim=1)
             loss = self.criterion(orig_probs, variant_probs)
             
         elif self.consistency_type == "mse":
-            # 使用均方误差
+            # Use mean squared error
             orig_probs = F.softmax(orig_pred / self.temperature, dim=1)
             variant_probs = F.softmax(variant_pred / self.temperature, dim=1)
             loss = self.criterion(orig_probs, variant_probs)
             
         elif self.consistency_type == "js":
-            # 使用Jensen-Shannon散度
+            # Use Jensen-Shannon divergence
             orig_probs = F.softmax(orig_pred / self.temperature, dim=1)
             variant_probs = F.softmax(variant_pred / self.temperature, dim=1)
             loss = self.criterion(orig_probs, variant_probs)
@@ -190,7 +191,7 @@ class VariantConsistencyLoss(nn.Module):
 
 class FocalLoss(nn.Module):
     """
-    Focal Loss用于处理类别不平衡
+    Focal Loss for handling class imbalance
     """
     def __init__(self, alpha=1.0, gamma=2.0, reduction='mean'):
         super().__init__()
@@ -200,11 +201,11 @@ class FocalLoss(nn.Module):
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-        计算Focal Loss
+        Calculate Focal Loss
         
         Args:
-            inputs: 模型预测 [batch_size, num_classes] 或 [batch_size]
-            targets: 真实标签 [batch_size]
+            inputs: Model predictions [batch_size, num_classes] or [batch_size]
+            targets: True labels [batch_size]
             
         Returns:
             Focal Loss
@@ -213,7 +214,7 @@ class FocalLoss(nn.Module):
             inputs = inputs.squeeze()
             
         BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        pt = torch.exp(-BCE_loss)  # 防止数值不稳定
+        pt = torch.exp(-BCE_loss)  # Prevent numerical instability
         F_loss = self.alpha * (1 - pt) ** self.gamma * BCE_loss
         
         if self.reduction == 'mean':
@@ -224,39 +225,39 @@ class FocalLoss(nn.Module):
             return F_loss
 
 
-# 测试代码
+# Test code
 if __name__ == "__main__":
-    # 测试必要的损失函数
-    print("🧪 测试必要的损失函数...")
+    # Test necessary loss functions
+    print("🧪 Testing necessary loss functions...")
     
-    # 模拟数据
+    # Simulate data
     batch_size, proj_dim = 4, 128
     orig_feat = torch.randn(batch_size, proj_dim)
     semantic_feat = torch.randn(batch_size, proj_dim)
     confusion_feat = torch.randn(batch_size, proj_dim)
     negative_feat = torch.randn(batch_size, proj_dim)
     
-    # 测试三元组对比损失
+    # Test triplet contrastive loss
     triplet_loss = TripletContrastiveLoss()
     loss1 = triplet_loss(orig_feat, [semantic_feat, confusion_feat], negative_feat)
-    print(f"三元组对比损失: {loss1.item():.4f}")
+    print(f"Triplet contrastive loss: {loss1.item():.4f}")
     
-    # 测试困难三元组损失
+    # Test hard triplet loss
     hard_triplet_loss = HardTripletLoss()
     loss2 = hard_triplet_loss(orig_feat, [semantic_feat, confusion_feat], negative_feat)
-    print(f"困难三元组损失: {loss2.item():.4f}")
+    print(f"Hard triplet loss: {loss2.item():.4f}")
     
-    # 测试变体一致性损失
+    # Test variant consistency loss
     orig_pred = torch.randn(batch_size, 1)
     variant_pred = torch.randn(batch_size, 1)
     consistency_loss = VariantConsistencyLoss()
     loss3 = consistency_loss(orig_pred, variant_pred)
-    print(f"变体一致性损失: {loss3.item():.4f}")
+    print(f"Variant consistency loss: {loss3.item():.4f}")
     
-    # 测试Focal Loss
+    # Test Focal Loss
     labels = torch.randint(0, 2, (batch_size,)).float()
     focal_loss = FocalLoss()
     loss4 = focal_loss(orig_pred.squeeze(), labels)
     print(f"Focal Loss: {loss4.item():.4f}")
     
-    print("✅ 必要的损失函数测试通过！")
+    print("✅ Necessary loss functions test passed!")

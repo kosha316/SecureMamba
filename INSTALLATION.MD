@@ -1,6 +1,4 @@
-明白了！以下是修正后的完整独立安装教程，**移除 ProkBERT**，**补充完整包列表**，**优先使用 conda 安装**：
 
-```markdown
 # SecureMamba - Complete Installation Guide
 
 A step-by-step guide to install SecureMamba and all its dependencies.
@@ -836,12 +834,3 @@ If you encounter issues not covered here:
 **Maintainer**: kosha316
 ```
 
----
-
-主要修正：
-
-1. **移除 ProkBERT** - 从所有章节中删除
-2. **完整的包列表** - 基于你提供的 `conda list`，包含所有 conda 和 pip 包
-3. **优先 conda 安装** - 所有能用 conda 安装的包都放在 conda 部分
-4. **备用方案** - pip 和手动安装作为备选
-5. **Mamba-SSM 专门章节** - 详细的安装和故障排查

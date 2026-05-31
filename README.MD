@@ -465,7 +465,7 @@ Place the downloaded model file in the project root directory or specify the pat
 ---
 
 ## Installation
-
+[Installation Guide](./INSTALLATION.MD)
 ---
 ## Configuration
 

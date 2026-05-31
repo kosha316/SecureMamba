@@ -7,7 +7,7 @@ import numpy as np
 from collections import defaultdict
 
 # --------------------------
-# 常量定义：氨基酸替换规则与密码子映射
+# Constants: Amino acid substitution rules and codon mapping
 # --------------------------
 conservative_aa_replacements = {
     'A': ['V', 'L', 'I', 'G'], 'V': ['A', 'L', 'I', 'M'], 'L': ['A', 'V', 'I', 'M', 'F'], 
@@ -30,7 +30,7 @@ codon_to_aa = {
     'GAU': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGU': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'
 }
 
-# 氨基酸-密码子反向映射
+# Amino acid to codon reverse mapping
 aa_to_codons = defaultdict(list)
 for codon, aa in codon_to_aa.items():
     if aa != '*':
@@ -39,14 +39,14 @@ for codon, aa in codon_to_aa.items():
 all_valid_aas = [aa for aa in aa_to_codons.keys() if aa != '*']
 
 # --------------------------
-# 二核苷酸自由能数据 (kcal/mol)
+# Dinucleotide free energy data (kcal/mol)
 # --------------------------
 dimer_free_energy = {
     'AA': -1.00, 'AT': -0.88, 'AC': -1.45, 'AG': -1.30,
     'TA': -0.58, 'TT': -1.00, 'TC': -1.30, 'TG': -1.45,
     'CA': -1.45, 'CT': -1.30, 'CC': -2.17, 'CG': -2.24,
     'GA': -1.30, 'GT': -1.45, 'GC': -2.24, 'GG': -2.17,
-    # RNA二核苷酸自由能
+    # RNA dinucleotide free energy
     'UU': -1.00, 'UA': -0.88, 'UC': -1.45, 'UG': -1.30,
     'AU': -0.58, 'AA': -1.00, 'AC': -1.30, 'AG': -1.45,
     'CU': -1.45, 'CA': -1.30, 'CC': -2.17, 'CG': -2.24,
@@ -54,10 +54,10 @@ dimer_free_energy = {
 }
 
 # --------------------------
-# 辅助函数
+# Helper functions
 # --------------------------
 def calculate_sequence_differences(orig_seq: str, var_seq: str) -> Dict[str, float]:
-    """计算序列差异统计"""
+    """Calculate sequence difference statistics"""
     min_base_len = min(len(orig_seq), len(var_seq))
     base_diff_count = sum(1 for o, v in zip(orig_seq[:min_base_len], var_seq[:min_base_len]) if o != v)
     base_diff_ratio = base_diff_count / min_base_len if min_base_len > 0 else 0.0
@@ -81,7 +81,7 @@ def calculate_sequence_differences(orig_seq: str, var_seq: str) -> Dict[str, flo
 
 
 def calculate_dimer_free_energy(sequence: str) -> float:
-    """基于二核苷酸自由能的精确计算"""
+    """Accurate calculation based on dinucleotide free energy"""
     rna_seq = sequence.replace('T', 'U').upper()
     
     if len(rna_seq) < 2:
@@ -100,17 +100,17 @@ def calculate_dimer_free_energy(sequence: str) -> float:
 
 
 def calculate_conservative_energy_change(original_codon: str, new_codon: str) -> float:
-    """计算保守替换导致的自由能变化"""
+    """Calculate free energy change caused by conservative substitution"""
     if len(original_codon) != 3 or len(new_codon) != 3:
         return 0.0
     
-    # 计算原始密码子的自由能
+    # Calculate free energy of original codon
     original_energy = calculate_dimer_free_energy(original_codon)
     
-    # 计算新密码子的自由能
+    # Calculate free energy of new codon
     new_energy = calculate_dimer_free_energy(new_codon)
     
-    # 返回自由能变化
+    # Return free energy change
     return abs(new_energy - original_energy)
 
 
@@ -118,48 +118,48 @@ def balanced_codon_sampling(
     target_codons: List[str],
     used_codons: List[str] = None
 ) -> str:
-    """平衡密码子采样"""
+    """Balanced codon sampling"""
     used_codons = used_codons or []
     available_codons = [c for c in target_codons if c not in used_codons]
     if not available_codons:
         available_codons = target_codons
     
-    # 均匀采样
+    # Uniform sampling
     return random.choice(available_codons)
 
 
 def get_codon_base_diff(codon1: str, codon2: str) -> int:
-    """计算两个密码子的碱基差异数"""
+    """Calculate the number of base differences between two codons"""
     if len(codon1) != 3 or len(codon2) != 3:
         return 3
     return sum(c1 != c2 for c1, c2 in zip(codon1, codon2))
 
 
 def reverse_complement(dna_sequence: str) -> str:
-    """生成DNA序列的反向互补序列"""
+    """Generate reverse complement of DNA sequence"""
     complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C', 'N': 'N'}
     return ''.join(complement.get(base, 'N') for base in reversed(dna_sequence.upper()))
 
 
 # --------------------------
-# 核心：语义相似变体生成（第一个正样本）
+# Core: Semantic similarity variant generation (first positive sample)
 # --------------------------
 
 def generate_positive_variant(
     seq_str: str,
-    conservative_energy_tolerance: float = 1.0,  # 放宽能量容忍度
-    min_pos_base_diff: float = 0.02,  # 降低最小差异
-    max_pos_base_diff: float = 0.25,  # 提高最大差异
-    pos_conservative_ratio: float = 0.05,  # 降低保守替换比例
-    pos_syn_ratio: float = 0.8,  # 提高同义替换比例
-    max_replace_ratio: float = 0.4,  # 提高最大替换比例
-    max_attempts: int = 500,  # 增加尝试次数
-    min_conservative_changes: int = 1  # 最小保守替换数
+    conservative_energy_tolerance: float = 1.0,  # Relaxed energy tolerance
+    min_pos_base_diff: float = 0.02,  # Reduced minimum difference
+    max_pos_base_diff: float = 0.25,  # Increased maximum difference
+    pos_conservative_ratio: float = 0.05,  # Reduced conservative substitution ratio
+    pos_syn_ratio: float = 0.8,  # Increased synonymous substitution ratio
+    max_replace_ratio: float = 0.4,  # Increased maximum substitution ratio
+    max_attempts: int = 500,  # Increased number of attempts
+    min_conservative_changes: int = 1  # Minimum number of conservative substitutions
 ) -> str:
-    """为一条序列生成一个语义相似正样本变体（优化版本，提高成功率）"""
+    """Generate a semantic similarity positive sample variant for a sequence (optimized version, increased success rate)"""
     
     def get_replaceable_positions(codons):
-        """预计算可以进行替换的位置"""
+        """Precompute positions that can be substituted"""
         syn_positions = []
         conservative_positions = []
         
@@ -168,27 +168,27 @@ def generate_positive_variant(
             if not original_aa or original_aa == '*':
                 continue
                 
-            # 检查是否可以同义替换
+            # Check if synonymous substitution is possible
             if len(aa_to_codons.get(original_aa, [])) > 1:
                 syn_positions.append(i)
                 
-            # 检查是否可以保守替换
+            # Check if conservative substitution is possible
             if original_aa in conservative_aa_replacements:
                 conservative_positions.append(i)
         
         return syn_positions, conservative_positions
     
     def fallback_strategy(codons, used_codons):
-        """备用策略：仅使用同义替换"""
+        """Fallback strategy: use only synonymous substitutions"""
         variant_codons = codons.copy()
         codon_count = len(codons)
         
-        # 计算需要的替换数量
-        min_changes = max(1, int(codon_count * 0.05))  # 至少5%的密码子
-        max_changes = int(codon_count * 0.25)  # 最多25%的密码子
+        # Calculate number of substitutions needed
+        min_changes = max(1, int(codon_count * 0.05))  # At least 5% of codons
+        max_changes = int(codon_count * 0.25)  # At most 25% of codons
         replace_count = random.randint(min_changes, max_changes)
         
-        # 选择可替换的位置
+        # Select replaceable positions
         candidate_positions = []
         for i, codon in enumerate(codons):
             original_aa = codon_to_aa.get(codon)
@@ -215,46 +215,46 @@ def generate_positive_variant(
         
         return ''.join(variant_codons).replace('U', 'T') if changes_made > 0 else None
 
-    # 主函数开始
+    # Main function starts
     seq_rna = seq_str.replace('T', 'U')
     if len(seq_rna) % 3 != 0:
-        raise ValueError(f"序列长度必须为3的倍数（当前：{len(seq_rna)}）")
+        raise ValueError(f"Sequence length must be a multiple of 3 (current: {len(seq_rna)})")
     
     codon_count = len(seq_rna) // 3
     if codon_count < 3:
-        raise ValueError(f"序列过短（{codon_count}个密码子），无法生成有效变体")
+        raise ValueError(f"Sequence too short ({codon_count} codons), cannot generate valid variant")
 
     seq_codons = [seq_rna[i:i+3] for i in range(0, len(seq_rna), 3)]
     
-    # 预计算可替换位置
+    # Precompute replaceable positions
     all_syn_positions, all_conservative_positions = get_replaceable_positions(seq_codons)
     
-    # 如果没有足够的可替换位置，直接使用备用策略
+    # If no replaceable positions, directly use fallback strategy
     if len(all_syn_positions) < 2 and len(all_conservative_positions) < 1:
         fallback_variant = fallback_strategy(seq_codons, defaultdict(list))
         if fallback_variant:
             diff_stats = calculate_sequence_differences(seq_str, fallback_variant)
-            print(f"✅ 直接使用备用策略: 序列差异={diff_stats['base_diff_ratio']:.3f}")
+            print(f"✅ Direct fallback strategy: Sequence difference={diff_stats['base_diff_ratio']:.3f}")
             return fallback_variant
         else:
-            warnings.warn(f"序列 {seq_str[:20]}... 没有足够的可替换位置")
+            warnings.warn(f"Sequence {seq_str[:20]}... has no replaceable positions")
             return ""
 
     for attempt in range(max_attempts):
-        # 计算替换位置数
+        # Calculate number of substitution positions
         max_replace_count = max(1, int(codon_count * max_replace_ratio))
         min_replace_count = max(1, int(codon_count * min_pos_base_diff / 3))
         replace_count = random.randint(min_replace_count, max_replace_count)
         
-        # 分配替换类型
+        # Allocate substitution types
         conservative_count = max(0, int(round(replace_count * pos_conservative_ratio)))
         syn_count = max(0, replace_count - conservative_count)
         
-        # 确保有足够的可替换位置
+        # Ensure sufficient replaceable positions
         available_conservative = min(conservative_count, len(all_conservative_positions))
         available_syn = min(syn_count, len(all_syn_positions))
         
-        # 如果某种替换类型位置不足，调整另一种类型
+        # If one substitution type lacks positions, adjust the other type
         if available_conservative < conservative_count:
             available_syn += (conservative_count - available_conservative)
             available_conservative = 0
@@ -262,7 +262,7 @@ def generate_positive_variant(
             available_conservative = min(available_conservative + (syn_count - available_syn), len(all_conservative_positions))
             available_syn = len(all_syn_positions)
         
-        # 选择替换位置
+        # Select substitution positions
         conservative_positions = random.sample(all_conservative_positions, available_conservative) if available_conservative > 0 else []
         syn_positions = random.sample(all_syn_positions, available_syn) if available_syn > 0 else []
 
@@ -272,7 +272,7 @@ def generate_positive_variant(
         total_conservative_energy_change = 0.0
         conservative_changes_made = 0
 
-        # 第一阶段：同义替换（成功率更高）
+        # Phase 1: Synonymous substitutions (higher success rate)
         for pos in syn_positions:
             current_codon = variant_codons[pos]
             original_aa = codon_to_aa.get(current_codon)
@@ -288,9 +288,9 @@ def generate_positive_variant(
                 position_used_codons[pos].append(selected_codon)
                 valid_replace = True
 
-        # 第二阶段：保守替换（更宽松的条件）
+        # Phase 2: Conservative substitutions (more lenient conditions)
         for pos in conservative_positions:
-            # 如果已经达到最小要求且能量变化较大，停止保守替换
+            # If minimum requirement met and energy change is large, stop conservative substitutions
             if (conservative_changes_made >= min_conservative_changes and 
                 total_conservative_energy_change > conservative_energy_tolerance * 0.7):
                 break
@@ -300,7 +300,7 @@ def generate_positive_variant(
             if not original_aa or original_aa == '*':
                 continue
                 
-            # 扩展可接受的替换选项
+            # Expand acceptable substitution options
             candidate_codons = []
             if original_aa in conservative_aa_replacements:
                 target_aas = conservative_aa_replacements[original_aa]
@@ -308,24 +308,24 @@ def generate_positive_variant(
                     candidate_codons.extend([c for c in aa_to_codons.get(aa, []) 
                                           if codon_to_aa[c] != '*'])
             
-            # 如果没有保守替换选项，跳过
+            # If no conservative substitution options, skip
             if not candidate_codons:
                 continue
                 
             candidate_codons = [c for c in candidate_codons if c != current_codon]
             
             if candidate_codons:
-                # 优先选择能量变化小的替换
+                # Prioritize substitutions with smaller energy change
                 energy_sorted_candidates = sorted(
                     candidate_codons,
                     key=lambda c: calculate_conservative_energy_change(current_codon, c)
                 )
                 
-                # 尝试前3个能量最小的候选
+                # Try the first 3 candidates with smallest energy
                 for selected_codon in energy_sorted_candidates[:3]:
                     energy_change = calculate_conservative_energy_change(current_codon, selected_codon)
                     
-                    # 检查累计能量变化是否在容忍范围内
+                    # Check if cumulative energy change is within tolerance
                     if total_conservative_energy_change + energy_change <= conservative_energy_tolerance:
                         variant_codons[pos] = selected_codon
                         position_used_codons[pos].append(selected_codon)
@@ -337,37 +337,37 @@ def generate_positive_variant(
         if not valid_replace:
             continue
 
-        # 检查生成的变体
+        # Check generated variant
         variant_rna_str = ''.join(variant_codons)
         variant_dna_str = variant_rna_str.replace('U', 'T')
         
         diff_stats = calculate_sequence_differences(seq_str, variant_dna_str)
         base_diff_ratio = diff_stats['base_diff_ratio']
 
-        # 放宽检查条件
+        # Relaxed validation conditions
         if (total_conservative_energy_change <= conservative_energy_tolerance
             and min_pos_base_diff <= base_diff_ratio <= max_pos_base_diff
             and variant_dna_str != seq_str
             and conservative_changes_made >= min_conservative_changes):
-            print(f"✅ 语义变体生成成功: 保守替换={conservative_changes_made}, "
-                  f"自由能变化={total_conservative_energy_change:.3f}, "
-                  f"序列差异={base_diff_ratio:.3f}")
+            print(f"✅ Semantic variant generated successfully: Conservative substitutions={conservative_changes_made}, "
+                  f"Free energy change={total_conservative_energy_change:.3f}, "
+                  f"Sequence difference={base_diff_ratio:.3f}")
             return variant_dna_str
 
-    # 主要策略失败，尝试备用策略
-    print(f"⚠️ 主要策略失败，尝试备用策略...")
+    # Primary strategy failed, try fallback strategy
+    print(f"⚠️ Primary strategy failed, trying fallback strategy...")
     fallback_variant = fallback_strategy(seq_codons, defaultdict(list))
     if fallback_variant:
         diff_stats = calculate_sequence_differences(seq_str, fallback_variant)
-        print(f"✅ 备用策略生成成功: 序列差异={diff_stats['base_diff_ratio']:.3f}")
+        print(f"✅ Fallback strategy successful: Sequence difference={diff_stats['base_diff_ratio']:.3f}")
         return fallback_variant
 
-    # 如果仍然失败，返回警告
-    warnings.warn(f"无法为序列 {seq_str[:20]}... 生成语义相似变体（尝试{max_attempts}次+备用策略）")
+    # If still failing, return warning
+    warnings.warn(f"Cannot generate semantic similarity variant for sequence {seq_str[:20]}... (attempted {max_attempts} times + fallback strategy)")
     return ""
 
 # --------------------------
-# 核心：DNA混淆变体生成（第二个正样本）- 不考虑自由能
+# Core: DNA confusion variant generation (second positive sample) - free energy not considered
 # --------------------------
 def generate_dna_confusion_variant(
     original_seq: str,
@@ -379,13 +379,13 @@ def generate_dna_confusion_variant(
     max_attempts: int = 50
 ) -> str:
     """
-    通过DNA混淆生成正样本变体
-    策略：片段化 + 随机反向互补
-    注意：不考虑自由能变化
+    Generate positive sample variant through DNA confusion
+    Strategy: Fragmentation + random reverse complement
+    Note: Free energy changes not considered
     """
     seq_len = len(original_seq)
     
-    # 根据序列长度动态调整参数
+    # Dynamically adjust parameters based on sequence length
     if seq_len < 100:
         min_fragment_len = max(15, seq_len // 4)
         max_fragment_len = min(60, seq_len // 2)
@@ -399,17 +399,17 @@ def generate_dna_confusion_variant(
         max_fragments = min(15, seq_len // min_fragment_len)
         flip_ratio = 0.25
     
-    # 检查序列是否仍然太短
+    # Check if sequence is still too short
     if seq_len < min_fragment_len * min_fragments:
-        warnings.warn(f"序列过短（{seq_len}），无法进行有效的DNA混淆（需要至少{min_fragment_len * min_fragments}bp）")
+        warnings.warn(f"Sequence too short ({seq_len}), cannot perform effective DNA confusion (need at least {min_fragment_len * min_fragments} bp)")
         return ""
     
     for attempt in range(max_attempts):
         try:
-            # 1. 确定片段数量
+            # 1. Determine number of fragments
             num_fragments = random.randint(min_fragments, max_fragments)
             
-            # 2. 生成片段边界
+            # 2. Generate fragment boundaries
             fragment_boundaries = []
             remaining_len = seq_len
             current_pos = 0
@@ -429,7 +429,7 @@ def generate_dna_confusion_variant(
                 current_pos += fragment_len
                 remaining_len -= fragment_len
             
-            # 添加最后一个片段
+            # Add the last fragment
             if current_pos < seq_len:
                 last_fragment_len = seq_len - current_pos
                 if last_fragment_len >= min_fragment_len:
@@ -444,7 +444,7 @@ def generate_dna_confusion_variant(
             if not fragment_boundaries:
                 continue
             
-            # 3. 随机选择要反向互补的片段
+            # 3. Randomly select fragments to reverse complement
             flip_indices = set()
             num_to_flip = max(1, int(len(fragment_boundaries) * flip_ratio))
             if len(fragment_boundaries) > 1:
@@ -452,7 +452,7 @@ def generate_dna_confusion_variant(
             else:
                 flip_indices = {0}
             
-            # 4. 构建混淆后的序列
+            # 4. Build confused sequence
             result_fragments = []
             for i, (start, end) in enumerate(fragment_boundaries):
                 fragment = original_seq[start:end]
@@ -462,36 +462,36 @@ def generate_dna_confusion_variant(
                 
                 result_fragments.append(fragment)
 
-            # 5. 随机打乱片段顺序
+            # 5. Randomly shuffle fragment order
             if random.random() < 0.5 and len(result_fragments) > 1:
                 random.shuffle(result_fragments)
             
             confused_seq = ''.join(result_fragments)
             
-            # 6. 验证生成的序列
+            # 6. Validate generated sequence
             if len(confused_seq) != seq_len:
                 continue
             
-            # 计算序列差异
+            # Calculate sequence difference
             diff_stats = calculate_sequence_differences(original_seq, confused_seq)
             base_diff_ratio = diff_stats['base_diff_ratio']
             
-            # DNA混淆变体不检查自由能，只要生成成功就返回
-            if confused_seq != original_seq:  # 确保不是原始序列
-                print(f"✅ DNA混淆变体生成成功: 序列差异={base_diff_ratio:.3f}")
+            # DNA confusion variant does not check free energy, return as long as generation is successful
+            if confused_seq != original_seq:  # Ensure not original sequence
+                print(f"✅ DNA confusion variant generated successfully: Sequence difference={base_diff_ratio:.3f}")
                 return confused_seq
                 
         except Exception as e:
             if attempt == 0:
-                print(f"❌ DNA混淆生成失败：{str(e)}")
+                print(f"❌ DNA confusion generation failed: {str(e)}")
             continue
     
-    print(f"❌ 无法为序列生成DNA混淆变体（尝试{max_attempts}次）")
+    print(f"❌ Cannot generate DNA confusion variant for sequence (attempted {max_attempts} times)")
     return ""
 
 
 # --------------------------
-# 核心：负样本变体生成（随机碱基替换）- 不考虑自由能
+# Core: Negative sample variant generation (random base substitution) - free energy not considered
 # --------------------------
 def generate_negative_variant(
     original_seq: str,
@@ -499,21 +499,21 @@ def generate_negative_variant(
     max_attempts: int = 20
 ) -> str:
     """
-    通过随机碱基替换生成负样本变体
-    注意：不考虑自由能变化
+    Generate negative sample variant through random base substitution
+    Note: Free energy changes not considered
     """
     seq_len = len(original_seq)
     bases = ['A', 'T', 'C', 'G']
     
     for attempt in range(max_attempts):
         try:
-            # 计算需要替换的碱基数量
+            # Calculate number of bases to substitute
             num_mutations = max(1, int(seq_len * mutation_rate))
             
-            # 随机选择替换位置
+            # Randomly select substitution positions
             mutation_positions = random.sample(range(seq_len), num_mutations)
             
-            # 构建负样本序列
+            # Build negative sample sequence
             negative_seq_list = list(original_seq)
             
             for pos in mutation_positions:
@@ -525,37 +525,37 @@ def generate_negative_variant(
             
             negative_seq = ''.join(negative_seq_list)
             
-            # 验证生成的序列
+            # Validate generated sequence
             if len(negative_seq) != seq_len:
                 continue
                 
-            # 计算与原始序列的差异
+            # Calculate difference from original sequence
             diff_count = sum(1 for a, b in zip(original_seq, negative_seq) if a != b)
             diff_ratio = diff_count / seq_len
             
-            # 负样本只检查序列差异，不考虑自由能
+            # Negative sample only checks sequence difference, does not consider free energy
             if 0.3 <= diff_ratio <= 0.7 and negative_seq != original_seq:
-                print(f"✅ 负样本生成成功: 差异率={diff_ratio:.3f}")
+                print(f"✅ Negative sample generated successfully: Difference rate={diff_ratio:.3f}")
                 return negative_seq
             else:
                 if attempt == max_attempts - 1:
-                    print(f"⚠️ 负样本差异率超出范围: {diff_ratio:.3f}")
+                    print(f"⚠️ Negative sample difference rate out of range: {diff_ratio:.3f}")
                 
         except Exception as e:
             if attempt == 0:
-                print(f"❌ 负样本生成失败：{str(e)}")
+                print(f"❌ Negative sample generation failed: {str(e)}")
             continue
     
-    print(f"❌ 无法为序列生成负样本变体（尝试{max_attempts}次）")
+    print(f"❌ Cannot generate negative sample variant for sequence (attempted {max_attempts} times)")
     return ""
 
 
 # --------------------------
-# 顶层：三元组视图生成（原始序列 + 两个正样本 + 一个负样本）
+# Top-level: Triplet views generation (original sequence + two positive samples + one negative sample)
 # --------------------------
 def generate_triplet_views(
     current_seg: dict,
-    # 语义变体参数
+    # Semantic variant parameters
     conservative_energy_tolerance: float = 0.5,
     min_pos_base_diff: float = 0.05,
     max_pos_base_diff: float = 0.2,
@@ -563,20 +563,20 @@ def generate_triplet_views(
     pos_syn_ratio: float = 0.7,
     max_replace_ratio: float = 0.3,
     max_semantic_attempts: int = 200,
-    # DNA混淆参数
+    # DNA confusion parameters
     min_fragment_len: int = 50,
     max_fragment_len: int = 200,
     min_fragments: int = 3,
     max_fragments: int = 10,
     flip_ratio: float = 0.3,
     max_confusion_attempts: int = 50,
-    # 负样本参数
+    # Negative sample parameters
     negative_mutation_rate: float = 0.5,
     max_negative_attempts: int = 20
 ) -> Dict[str, Any]:
     """
-    为一条序列生成三元组视图：原始序列 + 两个正样本 + 一个负样本
-    语义变体只计算保守替换的自由能变化，其他变体不考虑自由能
+    Generate triplet views for a sequence: original sequence + two positive samples + one negative sample
+    Semantic variant only calculates free energy change from conservative substitutions, other variants do not consider free energy
     """
     current_seq = current_seg['original_seq']
     current_label = current_seg['label']
@@ -586,9 +586,9 @@ def generate_triplet_views(
     negative_views = []
     view_types = []
     
-    print(f"🔧 为序列生成三元组视图 (长度: {seq_len}bp)")
+    print(f"🔧 Generating triplet views for sequence (length: {seq_len} bp)")
 
-    # 生成语义相似变体（第一个正样本）- 只计算保守替换的自由能变化
+    # Generate semantic similarity variant (first positive sample) - only calculates free energy change from conservative substitutions
     semantic_variant = generate_positive_variant(
         seq_str=current_seq,
         conservative_energy_tolerance=conservative_energy_tolerance,
@@ -603,11 +603,11 @@ def generate_triplet_views(
     if semantic_variant:
         positive_views.append(semantic_variant)
         view_types.append("semantic")
-        print(f"✅ 语义变体生成成功")
+        print(f"✅ Semantic variant generated successfully")
     else:
-        print(f"❌ 语义变体生成失败")
+        print(f"❌ Semantic variant generation failed")
     
-    # 生成DNA混淆变体（第二个正样本）- 不考虑自由能
+    # Generate DNA confusion variant (second positive sample) - free energy not considered
     min_required_length = min_fragment_len * min_fragments
     if seq_len >= min_required_length:
         confusion_variant = generate_dna_confusion_variant(
@@ -623,13 +623,13 @@ def generate_triplet_views(
         if confusion_variant:
             positive_views.append(confusion_variant)
             view_types.append("confusion")
-            print(f"✅ DNA混淆变体生成成功")
+            print(f"✅ DNA confusion variant generated successfully")
         else:
-            print(f"❌ DNA混淆变体生成失败")
+            print(f"❌ DNA confusion variant generation failed")
     else:
-        print(f"⚠️ 序列过短 ({seq_len}bp < {min_required_length}bp)，跳过DNA混淆变体生成")
+        print(f"⚠️ Sequence too short ({seq_len} bp < {min_required_length} bp), skipping DNA confusion variant generation")
     
-    # 生成负样本变体（随机碱基替换）- 不考虑自由能
+    # Generate negative sample variant (random base substitution) - free energy not considered
     negative_variant = generate_negative_variant(
         original_seq=current_seq,
         mutation_rate=negative_mutation_rate,
@@ -638,28 +638,28 @@ def generate_triplet_views(
     
     if negative_variant:
         negative_views.append(negative_variant)
-        print(f"✅ 负样本变体生成成功")
+        print(f"✅ Negative sample variant generated successfully")
     else:
-        print(f"❌ 负样本变体生成失败")
+        print(f"❌ Negative sample variant generation failed")
     
-    # 构建结果 - 确保使用正确的键名
+    # Build result - ensure using correct key names
     result = {
         'original_seq': current_seq,
         'original_label': current_label,
-        'positive_views': positive_views,  # 语义和混淆变体
-        'contrastive_negative_views': negative_views,  # 随机突变变体
+        'positive_views': positive_views,  # Semantic and confusion variants
+        'contrastive_negative_views': negative_views,  # Random mutation variants
         'view_types': view_types,
         'segment_id': current_seg.get('segment_id', 'unknown'),
         'num_positive_views': len(positive_views),
-        'num_contrastive_negative_views': len(negative_views),  # 使用新键名
+        'num_contrastive_negative_views': len(negative_views),  # Using new key name
         'has_variants': current_label == 1 and len(positive_views) > 0
     }
     
-    # 添加统计信息
+    # Add statistics information
     if positive_views or negative_views:
         view_diff_details = []
         
-        # 正样本差异
+        # Positive sample differences
         for i, view in enumerate(positive_views):
             diff_stats = calculate_sequence_differences(current_seq, view)
             view_detail = {
@@ -670,7 +670,7 @@ def generate_triplet_views(
             }
             view_diff_details.append(view_detail)
         
-        # 负样本差异
+        # Negative sample differences
         for view in negative_views:
             diff_stats = calculate_sequence_differences(current_seq, view)
             view_detail = {
@@ -683,16 +683,16 @@ def generate_triplet_views(
         
         result['view_diff_details'] = view_diff_details
     
-    print(f"📊 三元组生成结果: {len(positive_views)}个正样本, {len(negative_views)}个负样本")
+    print(f"📊 Triplet generation result: {len(positive_views)} positive samples, {len(negative_views)} negative samples")
     
     return result
 
 
 # --------------------------
-# 并行生成函数
+# Parallel generation function
 # --------------------------
 def _triplet_views_wrapper(args: Tuple) -> Dict[str, Any]:
-    """三元组视图生成的并行包装器"""
+    """Parallel wrapper for triplet view generation"""
     (current_seg, conservative_energy_tolerance, min_pos_base_diff,
      max_pos_base_diff, pos_conservative_ratio, pos_syn_ratio, max_replace_ratio,
      max_semantic_attempts, min_fragment_len, max_fragment_len,
@@ -719,23 +719,23 @@ def _triplet_views_wrapper(args: Tuple) -> Dict[str, Any]:
             max_negative_attempts=max_negative_attempts
         )
     except Exception as e:
-        warnings.warn(f"处理序列 {current_seg.get('segment_id', 'unknown')} 失败：{str(e)}")
+        warnings.warn(f"Failed to process sequence {current_seg.get('segment_id', 'unknown')}: {str(e)}")
         return {
             'original_seq': current_seg['original_seq'],
             'original_label': current_seg['label'],
             'positive_views': [],
-            'contrastive_negative_views': [],  # 使用新键名
+            'contrastive_negative_views': [],  # Using new key name
             'view_types': [],
             'segment_id': current_seg.get('segment_id', 'unknown'),
             'num_positive_views': 0,
-            'num_contrastive_negative_views': 0,  # 使用新键名
+            'num_contrastive_negative_views': 0,  # Using new key name
             'has_variants': False,
             'error': str(e)
         }
 
 def generate_triplet_views_parallel(
     all_segments: List[dict],
-    # 语义变体参数
+    # Semantic variant parameters
     conservative_energy_tolerance: float = 0.5,
     min_pos_base_diff: float = 0.05,
     max_pos_base_diff: float = 0.2,
@@ -743,22 +743,22 @@ def generate_triplet_views_parallel(
     pos_syn_ratio: float = 0.7,
     max_replace_ratio: float = 0.3,
     max_semantic_attempts: int = 200,
-    # DNA混淆参数
+    # DNA confusion parameters
     min_fragment_len: int = 50,
     max_fragment_len: int = 200,
     min_fragments: int = 3,
     max_fragments: int = 10,
     flip_ratio: float = 0.3,
     max_confusion_attempts: int = 50,
-    # 负样本参数
+    # Negative sample parameters
     negative_mutation_rate: float = 0.5,
     max_negative_attempts: int = 20,
-    # 并行参数
+    # Parallel parameters
     num_workers: int = None
 ) -> List[Dict[str, Any]]:
     """
-    并行为所有序列生成三元组视图
-    只对正样本生成变体，负样本保持不变
+    Generate triplet views for all sequences in parallel
+    Only generate variants for positive samples, keep negative samples unchanged
     """
     args_list = [
         (seg, conservative_energy_tolerance, min_pos_base_diff,
@@ -770,91 +770,92 @@ def generate_triplet_views_parallel(
     ]
 
     num_workers = num_workers or max(1, int(multiprocessing.cpu_count() * 0.8))
-    print(f"🚀 启动三元组视图生成（进程数：{num_workers}，总序列数：{len(all_segments)}）")
-    print(f"📋 目标：每条正样本序列生成2个正样本变体 + 1个随机突变变体（对比学习负样本）")
-    print(f"📋 负样本序列不生成任何变体")
-    print(f"🔋 保守替换自由能容忍度: ±{conservative_energy_tolerance} kcal/mol")
-    print(f"🔍 语义变体差异范围：[{min_pos_base_diff:.2f}, {max_pos_base_diff:.2f}]")
-    print(f"🧬 DNA混淆：片段{min_fragment_len}-{max_fragment_len}bp，{min_fragments}-{max_fragments}片段")
-    print(f"❌ 随机突变变体：随机突变{negative_mutation_rate:.1%}碱基（仅用于对比学习负样本）")
+    print(f"🚀 Starting triplet view generation (processes: {num_workers}, total sequences: {len(all_segments)})")
+    print(f"📋 Target: Generate 2 positive sample variants + 1 random mutation variant (contrastive learning negative sample) for each positive sample sequence")
+    print(f"📋 Negative sample sequences do not generate any variants")
+    print(f"🔋 Conservative substitution free energy tolerance: ±{conservative_energy_tolerance} kcal/mol")
+    print(f"🔍 Semantic variant difference range: [{min_pos_base_diff:.2f}, {max_pos_base_diff:.2f}]")
+    print(f"🧬 DNA confusion: fragments {min_fragment_len}-{max_fragment_len} bp, {min_fragments}-{max_fragments} fragments")
+    print(f"❌ Random mutation variant: random mutation {negative_mutation_rate:.1%} bases (only used for contrastive learning negative samples)")
 
     with multiprocessing.Pool(processes=num_workers) as pool:
         results = pool.map(_triplet_views_wrapper, args_list)
 
-    # 统计生成结果 - 使用新的键名
+    # Count generation results - using new key names
     successful_positives = sum(r['num_positive_views'] for r in results)
-    successful_contrastive_negatives = sum(r['num_contrastive_negative_views'] for r in results)  # 修改
+    successful_contrastive_negatives = sum(r['num_contrastive_negative_views'] for r in results)  # Modified
     
     semantic_success = sum(1 for r in results if any(t == "semantic" for t in r.get('view_types', [])))
     confusion_success = sum(1 for r in results if any(t == "confusion" for t in r.get('view_types', [])))
     
-    # 使用新键名
-    contrastive_negative_success = sum(1 for r in results if r['num_contrastive_negative_views'] > 0)  # 修改
+    # Using new key names
+    contrastive_negative_success = sum(1 for r in results if r['num_contrastive_negative_views'] > 0)  # Modified
     
-    # 完整三元组：正样本且有语义+混淆+随机突变
-    full_triplet_success = sum(1 for r in results if r['num_positive_views'] >= 2 and r['num_contrastive_negative_views'] >= 1)  # 修改
+    # Full triplet: positive sample with semantic + confusion + random mutation
+    full_triplet_success = sum(1 for r in results if r['num_positive_views'] >= 2 and r['num_contrastive_negative_views'] >= 1)  # Modified
     
-    # 统计正样本和负样本数量
+    # Count number of positive and negative samples
     positive_segments_count = sum(1 for seg in all_segments if seg.get('label', seg.get('original_label', 0)) == 1)
     negative_segments_count = len(all_segments) - positive_segments_count
     
-    print(f"\n📊 三元组生成完成统计：")
-    print(f"   总处理序列数：{len(all_segments)}")
-    print(f"   正样本序列数：{positive_segments_count}")
-    print(f"   负样本序列数：{negative_segments_count}")
-    print(f"   总正样本变体数：{successful_positives}")
-    print(f"   总对比学习负样本数：{successful_contrastive_negatives}")
-    print(f"   语义变体成功：{semantic_success}/{positive_segments_count} ({semantic_success/positive_segments_count*100:.1f}%)")
-    print(f"   DNA混淆成功：{confusion_success}/{positive_segments_count} ({confusion_success/positive_segments_count*100:.1f}%)")
-    print(f"   随机突变变体（对比学习负样本）成功：{contrastive_negative_success}/{positive_segments_count} ({contrastive_negative_success/positive_segments_count*100:.1f}%)")
-    print(f"   完整三元组成功：{full_triplet_success}/{positive_segments_count} ({full_triplet_success/positive_segments_count*100:.1f}%)")
+    print(f"\n📊 Triplet generation completion statistics:")
+    print(f"   Total processed sequences: {len(all_segments)}")
+    print(f"   Positive sample sequences: {positive_segments_count}")
+    print(f"   Negative sample sequences: {negative_segments_count}")
+    print(f"   Total positive sample variants: {successful_positives}")
+    print(f"   Total contrastive learning negative samples: {successful_contrastive_negatives}")
+    print(f"   Semantic variant success: {semantic_success}/{positive_segments_count} ({semantic_success/positive_segments_count*100:.1f}%)")
+    print(f"   DNA confusion success: {confusion_success}/{positive_segments_count} ({confusion_success/positive_segments_count*100:.1f}%)")
+    print(f"   Random mutation variant (contrastive learning negative sample) success: {contrastive_negative_success}/{positive_segments_count} ({contrastive_negative_success/positive_segments_count*100:.1f}%)")
+    print(f"   Full triplet success: {full_triplet_success}/{positive_segments_count} ({full_triplet_success/positive_segments_count*100:.1f}%)")
 
     return results
+
 # --------------------------
-# 测试函数
+# Test function
 # --------------------------
 def test_variant_generation():
-    """测试变体生成功能"""
-    # 测试序列
+    """Test variant generation functionality"""
+    # Test sequence
     test_seq = "ATGGCCATTGAATGGGCCGCTGCTTCTGGTGCTGCCGGTAGCGCAGTCCGTGGCGGTGCTGGTGCTGGTGCTGGCCAGCGTGGTGCTGCCG"
     
-    print("🧪 测试变体生成功能（只计算保守替换自由能）...")
+    print("🧪 Testing variant generation functionality (only calculating conservative substitution free energy)...")
     
-    # 测试语义相似变体
-    print("\n1. 测试语义相似变体生成:")
+    # Test semantic similarity variant
+    print("\n1. Testing semantic similarity variant generation:")
     semantic_variant = generate_positive_variant(test_seq, max_attempts=10)
     if semantic_variant:
         diff_stats = calculate_sequence_differences(test_seq, semantic_variant)
-        print(f"   ✅ 生成成功！序列差异: {diff_stats['base_diff_ratio']:.3f}")
-        print(f"   原始序列: {test_seq[:30]}...")
-        print(f"   语义变体: {semantic_variant[:30]}...")
+        print(f"   ✅ Generation successful! Sequence difference: {diff_stats['base_diff_ratio']:.3f}")
+        print(f"   Original sequence: {test_seq[:30]}...")
+        print(f"   Semantic variant: {semantic_variant[:30]}...")
     else:
-        print("   ❌ 生成失败")
+        print("   ❌ Generation failed")
     
-    # 测试DNA混淆变体
-    print("\n2. 测试DNA混淆变体生成:")
+    # Test DNA confusion variant
+    print("\n2. Testing DNA confusion variant generation:")
     confusion_variant = generate_dna_confusion_variant(test_seq, max_attempts=10)
     if confusion_variant:
         diff_stats = calculate_sequence_differences(test_seq, confusion_variant)
-        print(f"   ✅ 生成成功！序列差异: {diff_stats['base_diff_ratio']:.3f}")
-        print(f"   原始序列: {test_seq[:30]}...")
-        print(f"   DNA混淆: {confusion_variant[:30]}...")
+        print(f"   ✅ Generation successful! Sequence difference: {diff_stats['base_diff_ratio']:.3f}")
+        print(f"   Original sequence: {test_seq[:30]}...")
+        print(f"   DNA confusion: {confusion_variant[:30]}...")
     else:
-        print("   ❌ 生成失败")
+        print("   ❌ Generation failed")
     
-    # 测试负样本变体
-    print("\n3. 测试负样本变体生成:")
+    # Test negative sample variant
+    print("\n3. Testing negative sample variant generation:")
     negative_variant = generate_negative_variant(test_seq, max_attempts=10)
     if negative_variant:
         diff_stats = calculate_sequence_differences(test_seq, negative_variant)
-        print(f"   ✅ 生成成功！序列差异: {diff_stats['base_diff_ratio']:.3f}")
-        print(f"   原始序列: {test_seq[:30]}...")
-        print(f"   负样本: {negative_variant[:30]}...")
+        print(f"   ✅ Generation successful! Sequence difference: {diff_stats['base_diff_ratio']:.3f}")
+        print(f"   Original sequence: {test_seq[:30]}...")
+        print(f"   Negative sample: {negative_variant[:30]}...")
     else:
-        print("   ❌ 生成失败")
+        print("   ❌ Generation failed")
     
-    # 测试三元组视图生成
-    print("\n4. 测试三元组视图生成:")
+    # Test triplet view generation
+    print("\n4. Testing triplet view generation:")
     test_segment = {
         'original_seq': test_seq,
         'label': 1,
@@ -864,8 +865,8 @@ def test_variant_generation():
                                           max_semantic_attempts=10, 
                                           max_confusion_attempts=10,
                                           max_negative_attempts=10)
-    print(f"   生成结果: {triplet_result['num_positive_views']}个正样本, {triplet_result['num_negative_views']}个负样本")
-    print(f"   视图类型: {triplet_result.get('view_types', [])}")
+    print(f"   Generation result: {triplet_result['num_positive_views']} positive samples, {triplet_result['num_negative_views']} negative samples")
+    print(f"   View types: {triplet_result.get('view_types', [])}")
 
 
 if __name__ == "__main__":

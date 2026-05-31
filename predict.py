@@ -1,6 +1,6 @@
 """
-模型预测脚本
-支持自定义分类阈值
+Model prediction script
+Supports custom classification threshold
 """
 
 import torch
@@ -13,7 +13,7 @@ from typing import List, Optional, Tuple, Dict, Any
 import warnings
 warnings.filterwarnings('ignore')
 
-# 导入必要的库
+# Import necessary libraries
 from Bio import SeqIO
 import torch.nn as nn
 from tqdm import tqdm
@@ -26,7 +26,7 @@ from sklearn.metrics import (
     precision_recall_curve, roc_curve
 )
 
-# 导入项目模块
+# Import project modules
 try:
     from config import config
     from model import create_nucleotide_mamba_model

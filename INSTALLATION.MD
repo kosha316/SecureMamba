@@ -102,7 +102,8 @@ conda install -c conda-forge -y \
 conda install -c conda-forge -y \
     numba=0.61.2 \
     sympy=1.13.1 \
-    networkx=3.5
+    networkx=3.5 \
+    gmpy2=2.2.1
 ```
 
 ### Batch 8: Compression Packages
@@ -166,7 +167,8 @@ pip install \
     huggingface-hub==0.36.0 \
     datasets==4.4.1 \
     hf-xet==1.1.9 \
-    safetensors==0.6.2
+    safetensors==0.6.2 \
+    h5py==3.15.1
 ```
 
 ### Batch 13: Transformers
@@ -299,7 +301,7 @@ conda install -c conda-forge -y biopython=1.85
 
 # Batch 7
 echo "[7/16] Installing numerical computing..."
-conda install -c conda-forge -y numba=0.61.2 sympy=1.13.1 networkx=3.5
+conda install -c conda-forge -y numba=0.61.2 sympy=1.13.1 networkx=3.5 gmpy2=2.2.1
 
 # Batch 8
 echo "[8/16] Installing compression packages..."
@@ -323,7 +325,7 @@ conda install -c conda-forge -y tqdm=4.67.1 joblib=1.5.2 pyyaml=6.0.2 toml=0.10.
 
 # Batch 12
 echo "[12/16] Installing Hugging Face packages..."
-pip install huggingface-hub==0.36.0 datasets==4.4.1 hf-xet==1.1.9 safetensors==0.6.2
+pip install huggingface-hub==0.36.0 datasets==4.4.1 hf-xet==1.1.9 safetensors==0.6.2 h5py==3.15.1
 
 # Batch 13
 echo "[13/16] Installing Transformers..."

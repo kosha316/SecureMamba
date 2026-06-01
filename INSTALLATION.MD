@@ -542,7 +542,7 @@ These packages require CUDA compilation and often fail. Here are solutions:
 
 Visit the releases page to download pre-compiled wheels:
 - [causal-conv1d releases](https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
-- [mamba releases]https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
+- [mamba releases](https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
 
 Download the wheel matching:
 - Your CUDA version (11.8 or 12.1)

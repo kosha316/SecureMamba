@@ -591,7 +591,8 @@ python verify_all.py
 
 **Fix 1:** Install pre-compiled wheels
 ```bash
-# Download from: https://github.com/Dao-AILab/causal-conv1d/releases
+# causal_conv1d Download from: https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+# mamba_ssm https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 pip install causal_conv1d-1.5.3+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 pip install mamba_ssm-2.2.6+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 ```

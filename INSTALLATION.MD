@@ -7,8 +7,7 @@ This guide provides a **batch-by-batch** installation method that installs **eve
 
 ## Table of Contents
 
-1. [Quick Installation (Mamba)](#quick-installation-mamba)
-2. [Batch Installation (All Packages)](#batch-installation-all-packages)
+1. [Batch Installation (All Packages)](#batch-installation-all-packages)
    - [Batch 1: Environment Setup](#batch-1-environment-setup)
    - [Batch 2: PyTorch & CUDA Runtime](#batch-2-pytorch--cuda-runtime)
    - [Batch 3: Core Scientific Packages](#batch-3-core-scientific-packages)
@@ -25,10 +24,10 @@ This guide provides a **batch-by-batch** installation method that installs **eve
    - [Batch 14: Dimensionality Reduction](#batch-14-dimensionality-reduction)
    - [Batch 15: Mamba-SSM (Critical - Pre-built Wheels)](#batch-15-mamba-ssm-critical---pre-built-wheels)
    - [Batch 16: Remaining Pip Packages](#batch-16-remaining-pip-packages)
-4. [Complete Automation Script](#complete-automation-script)
-5. [Verification](#verification)
-6. [Troubleshooting](#troubleshooting)
-7. [Download Datasets & Model](#download-datasets--model)
+2. [Complete Automation Script](#complete-automation-script)
+3. [Verification](#verification)
+4. [Troubleshooting](#troubleshooting)
+5. [Download Datasets & Model](#download-datasets--model)
 
 ---
 

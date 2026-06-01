@@ -9,37 +9,26 @@ This guide provides a **batch-by-batch** installation method that installs **eve
 
 1. [Quick Installation (Mamba)](#quick-installation-mamba)
 2. [Batch Installation (All Packages)](#batch-installation-all-packages)
-   - [Batch 1: Python & Pip](#batch-1-python--pip)
-   - [Batch 2: PyTorch Ecosystem](#batch-2-pytorch-ecosystem)
+   - [Batch 1: Environment Setup](#batch-1-environment-setup)
+   - [Batch 2: PyTorch & CUDA Runtime](#batch-2-pytorch--cuda-runtime)
    - [Batch 3: Core Scientific Packages](#batch-3-core-scientific-packages)
    - [Batch 4: Visualization & Plotting](#batch-4-visualization--plotting)
    - [Batch 5: Machine Learning & Statistics](#batch-5-machine-learning--statistics)
    - [Batch 6: Bioinformatics](#batch-6-bioinformatics)
    - [Batch 7: Numerical Computing](#batch-7-numerical-computing)
-   - [Batch 8: Data Processing & Compression](#batch-8-data-processing--compression)
-   - [Batch 9: Network & Async](#batch-9-network--async)
+   - [Batch 8: Compression Packages](#batch-8-compression-packages)
+   - [Batch 9: Network Packages](#batch-9-network-packages)
    - [Batch 10: Image & GUI](#batch-10-image--gui)
-   - [Batch 11: System & Utilities](#batch-11-system--utilities)
+   - [Batch 11: System Utilities](#batch-11-system-utilities)
    - [Batch 12: Hugging Face Ecosystem](#batch-12-hugging-face-ecosystem)
-   - [Batch 13: Transformers & NLP](#batch-13-transformers--nlp)
+   - [Batch 13: Transformers](#batch-13-transformers)
    - [Batch 14: Dimensionality Reduction](#batch-14-dimensionality-reduction)
-   - [Batch 15: Mamba-SSM (Critical)](#batch-15-mamba-ssm-critical)
+   - [Batch 15: Mamba-SSM (Critical - Pre-built Wheels)](#batch-15-mamba-ssm-critical---pre-built-wheels)
    - [Batch 16: Remaining Pip Packages](#batch-16-remaining-pip-packages)
-   - [Batch 17: Conda-Only Packages](#batch-17-conda-only-packages)
-3. [Verification](#verification)
-4. [Troubleshooting](#troubleshooting)
-5. [Download Datasets & Model](#download-datasets--model)
-
----
-
-### Verify Your System
-
-```bash
-# Check GPU and CUDA driver
-nvidia-smi
-
-# Expected: CUDA Version 11.8 or higher
-```
+4. [Complete Automation Script](#complete-automation-script)
+5. [Verification](#verification)
+6. [Troubleshooting](#troubleshooting)
+7. [Download Datasets & Model](#download-datasets--model)
 
 ---
 
@@ -72,9 +61,9 @@ python -c "import torch; print('CUDA:', torch.cuda.is_available())"
 
 ## Batch Installation (All Packages)
 
-This method installs **every package** from your environment in small batches to avoid dependency conflicts.
+This method installs **every package** in small batches to avoid dependency conflicts.
 
-### Setup
+### Batch 1: Environment Setup
 
 ```bash
 # Create base environment
@@ -82,29 +71,20 @@ conda create -n securemamba python=3.11 -y
 conda activate securemamba
 
 # Upgrade pip
-pip install --upgrade pip
-```
-
----
-
-### Batch 1: Python & Pip
-
-```bash
-# Already installed with environment
+pip install pip==25.2 --upgrade
 pip install --upgrade setuptools wheel
 ```
 
----
-
-### Batch 2: PyTorch Ecosystem
+### Batch 2: PyTorch & CUDA Runtime
 
 ```bash
-# PyTorch with CUDA 11.8
+# Install PyTorch with CUDA 11.8
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
     --index-url https://download.pytorch.org/whl/cu118
-```
 
----
+# Install CUDA runtime libraries
+conda install -c nvidia -y cuda-cudart=11.8 cuda-cupti=11.8 cuda-nvrtc=11.8
+```
 
 ### Batch 3: Core Scientific Packages
 
@@ -114,8 +94,6 @@ conda install -c conda-forge -y \
     scipy=1.16.1 \
     pandas=2.3.2
 ```
-
----
 
 ### Batch 4: Visualization & Plotting
 
@@ -130,8 +108,6 @@ conda install -c conda-forge -y \
     pyparsing=3.2.3
 ```
 
----
-
 ### Batch 5: Machine Learning & Statistics
 
 ```bash
@@ -141,16 +117,12 @@ conda install -c conda-forge -y \
     threadpoolctl=3.6.0
 ```
 
----
-
 ### Batch 6: Bioinformatics
 
 ```bash
 conda install -c conda-forge -y \
     biopython=1.85
 ```
-
----
 
 ### Batch 7: Numerical Computing
 
@@ -161,9 +133,7 @@ conda install -c conda-forge -y \
     networkx=3.5
 ```
 
----
-
-### Batch 8: Data Processing & Compression
+### Batch 8: Compression Packages
 
 ```bash
 conda install -c conda-forge -y \
@@ -173,9 +143,7 @@ conda install -c conda-forge -y \
     zstandard=0.23.0
 ```
 
----
-
-### Batch 9: Network & Async
+### Batch 9: Network Packages
 
 ```bash
 conda install -c conda-forge -y \
@@ -187,8 +155,6 @@ conda install -c conda-forge -y \
     pysocks=1.7.1
 ```
 
----
-
 ### Batch 10: Image & GUI
 
 ```bash
@@ -198,9 +164,7 @@ conda install -c conda-forge -y \
     pyqt=5.15.9
 ```
 
----
-
-### Batch 11: System & Utilities
+### Batch 11: System Utilities
 
 ```bash
 conda install -c conda-forge -y \
@@ -223,8 +187,6 @@ conda install -c conda-forge -y \
     jinja2=3.1.6
 ```
 
----
-
 ### Batch 12: Hugging Face Ecosystem
 
 ```bash
@@ -232,60 +194,44 @@ pip install \
     huggingface-hub==0.36.0 \
     datasets==4.4.1 \
     hf-xet==1.1.9 \
-    safetensors==0.6.2 \
-    tokenizers==0.22.1
+    safetensors==0.6.2
 ```
 
----
-
-### Batch 13: Transformers & NLP
+### Batch 13: Transformers
 
 ```bash
-pip install \
-    transformers==4.57.1 \
-    regex==2025.9.1 \
-    tokenizers==0.22.1
+# transformers auto-installs tokenizers and regex
+pip install transformers==4.57.1
 ```
-
----
 
 ### Batch 14: Dimensionality Reduction
 
 ```bash
-pip install \
-    umap-learn==0.5.9.post2 \
-    pynndescent==0.5.13
+# umap-learn auto-installs pynndescent
+pip install umap-learn==0.5.9.post2
 ```
 
----
+### Batch 15: Mamba-SSM (Critical - Pre-built Wheels)
 
-### Batch 15: Mamba-SSM (Critical)
-
-**This is the most challenging package. Follow carefully:**
+**Use these pre-compiled wheels to avoid compilation issues:**
 
 ```bash
-# Set compilation flags (adjust based on your GPU)
-export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9"
-export MAX_JOBS=4
+# Download causal-conv1d pre-built wheel
+wget https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 
 # Install causal-conv1d
-pip install causal-conv1d==1.5.3.post1
+pip install causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+
+# Download mamba-ssm pre-built wheel
+wget https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 
 # Install mamba-ssm
-pip install mamba-ssm==2.2.6.post3
+pip install mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 ```
 
-**If the above fails,** try pre-compiled wheels:
-
-```bash
-# Download from: https://github.com/Dao-AILab/causal-conv1d/releases
-# Look for: causal_conv1d-1.5.3+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-
-pip install causal_conv1d-1.5.3+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-pip install mamba_ssm-2.2.6+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-```
-
----
+**Direct download links:**
+- [causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl](https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
+- [mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl](https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
 
 ### Batch 16: Remaining Pip Packages
 
@@ -304,7 +250,6 @@ pip install \
     anyio==4.11.0 \
     httpcore==1.0.9 \
     httpx==0.28.1 \
-    h11==0.16.0 \
     sniffio==1.3.1 \
     numexpr==2.14.1 \
     tables==3.10.2 \
@@ -319,111 +264,113 @@ pip install \
     xxhash==3.6.0 \
     lmdb==1.7.5 \
     patsy==1.0.1 \
-    ninja==1.11.1 \
     py-cpuinfo==9.0.0 \
-    ply==3.11 \
-    typing_extensions==4.15.0
+    ply==3.11
 ```
+
+> **Note:** The following packages are auto-installed as dependencies and do not need manual installation:
+> - `tokenizers` (by transformers)
+> - `regex` (by transformers)
+> - `ninja` (by mamba-ssm)
+> - `typing_extensions` (by torch)
+> - `pynndescent` (by umap-learn)
+> - `h11` (by httpcore)
 
 ---
 
-### Batch 17: Conda-Only Packages (System Libraries)
+## Complete Automation Script
 
-These are automatically installed with conda packages but listed here for completeness:
-
-```bash
-# These should already be installed as dependencies
-# Verify they are present:
-conda list | grep -E "alsa-lib|brotli|bzip2|cairo|dbus|expat|ffmpeg|fftw|fontconfig|freetype|gettext|glib|gmp|gnutls|graphite2|gstreamer|harfbuzz|icu|krb5|lame|lcms2|libclang|libcups|libdb|libdrm|libedit|libevent|libffi|libflac|libgcc|libgcrypt|libglib|libgpg-error|libhwloc|libiconv|libidn2|libllvm|libogg|libopus|libpng|libpq|libsndfile|libsqlite|libtasn1|libtiff|libtool|libudev|libunistring|libuuid|libva|libvorbis|libvpx|libwebp|libxcb|libxcrypt|libxkbcommon|libxml2|llvm-openmp|mpc|mpfr|mpg123|mysql-common|mysql-libs|ncurses|nettle|nspr|nss|openh264|openjpeg|openssl|p11-kit|pcre2|pixman|pulseaudio|qhull|qt-main|readline|svt-av1|tbb|tk|x264|x265|xcb-util|xkeyboard-config|xorg-libx11|xorg-libxau|xorg-libxdmcp|xorg-libxext|xorg-libxfixes|xorg-libxrender|xz|yaml|zlib
-```
-
----
-
-## Complete Batch Installation Script
-
-Save as `install_all_batches.sh`:
+Save as `install_all.sh`:
 
 ```bash
 #!/bin/bash
-set -e  # Stop on error
+# SecureMamba Complete Installation Script
+
+set -e
 
 echo "=========================================="
 echo "SecureMamba Complete Installation"
 echo "=========================================="
 
-# Create environment
-echo "[1/17] Creating environment..."
+# Initialize conda
+eval "$(conda shell.bash hook)"
+
+# Batch 1
+echo "[1/16] Creating environment..."
 conda create -n securemamba python=3.11 -y
 conda activate securemamba
-pip install --upgrade pip
+pip install pip==25.2 --upgrade
+pip install --upgrade setuptools wheel
 
 # Batch 2
-echo "[2/17] Installing PyTorch..."
+echo "[2/16] Installing PyTorch and CUDA..."
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
     --index-url https://download.pytorch.org/whl/cu118
+conda install -c nvidia -y cuda-cudart=11.8 cuda-cupti=11.8 cuda-nvrtc=11.8
 
 # Batch 3
-echo "[3/17] Installing core scientific packages..."
+echo "[3/16] Installing core scientific packages..."
 conda install -c conda-forge -y numpy=2.2.6 scipy=1.16.1 pandas=2.3.2
 
 # Batch 4
-echo "[4/17] Installing visualization packages..."
+echo "[4/16] Installing visualization packages..."
 conda install -c conda-forge -y matplotlib=3.9.1 seaborn=0.13.2 \
     contourpy=1.3.3 fonttools=4.59.2 kiwisolver=1.4.9 cycler=0.12.1 pyparsing=3.2.3
 
 # Batch 5
-echo "[5/17] Installing ML packages..."
+echo "[5/16] Installing ML packages..."
 conda install -c conda-forge -y scikit-learn=1.7.1 statsmodels=0.14.5 threadpoolctl=3.6.0
 
 # Batch 6
-echo "[6/17] Installing bioinformatics..."
+echo "[6/16] Installing bioinformatics..."
 conda install -c conda-forge -y biopython=1.85
 
 # Batch 7
-echo "[7/17] Installing numerical computing..."
+echo "[7/16] Installing numerical computing..."
 conda install -c conda-forge -y numba=0.61.2 sympy=1.13.1 networkx=3.5
 
 # Batch 8
-echo "[8/17] Installing compression packages..."
+echo "[8/16] Installing compression packages..."
 conda install -c conda-forge -y zstd=1.5.6 lz4-c=1.9.4 brotli=1.1.0 zstandard=0.23.0
 
 # Batch 9
-echo "[9/17] Installing network packages..."
+echo "[9/16] Installing network packages..."
 conda install -c conda-forge -y requests=2.32.5 urllib3=2.5.0 certifi=2025.11.12 \
     idna=3.10 charset-normalizer=3.4.3 pysocks=1.7.1
 
 # Batch 10
-echo "[10/17] Installing image/GUI packages..."
+echo "[10/16] Installing image/GUI packages..."
 conda install -c conda-forge -y pillow=9.4.0 jpeg=9e pyqt=5.15.9
 
 # Batch 11
-echo "[11/17] Installing utilities..."
+echo "[11/16] Installing utilities..."
 conda install -c conda-forge -y tqdm=4.67.1 joblib=1.5.2 pyyaml=6.0.2 toml=0.10.2 \
     tomli=2.2.1 colorama=0.4.6 unicodedata2=16.0.0 six=1.17.0 python-dateutil=2.9.0.post0 \
     pytz=2025.2 packaging=23.2 platformdirs=4.5.0 psutil=7.1.3 filelock=3.19.1 \
     tornado=6.5.2 markupsafe=3.0.2 jinja2=3.1.6
 
 # Batch 12
-echo "[12/17] Installing Hugging Face packages..."
+echo "[12/16] Installing Hugging Face packages..."
 pip install huggingface-hub==0.36.0 datasets==4.4.1 hf-xet==1.1.9 safetensors==0.6.2
 
 # Batch 13
-echo "[13/17] Installing Transformers..."
-pip install transformers==4.57.1 regex==2025.9.1
+echo "[13/16] Installing Transformers..."
+pip install transformers==4.57.1
 
 # Batch 14
-echo "[14/17] Installing UMAP..."
-pip install umap-learn==0.5.9.post2 pynndescent==0.5.13
+echo "[14/16] Installing UMAP..."
+pip install umap-learn==0.5.9.post2
 
 # Batch 15
-echo "[15/17] Installing Mamba-SSM (may take a few minutes)..."
-export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9"
-export MAX_JOBS=4
-pip install causal-conv1d==1.5.3.post1
-pip install mamba-ssm==2.2.6.post3
+echo "[15/16] Installing Mamba-SSM from pre-built wheels..."
+wget -q https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+wget -q https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+pip install causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+pip install mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+rm -f causal_conv1d*.whl mamba_ssm*.whl
 
 # Batch 16
-echo "[16/17] Installing remaining pip packages..."
+echo "[16/16] Installing remaining pip packages..."
 pip install \
     accelerate==1.11.0 \
     einops==0.8.1 \
@@ -438,7 +385,6 @@ pip install \
     anyio==4.11.0 \
     httpcore==1.0.9 \
     httpx==0.28.1 \
-    h11==0.16.0 \
     sniffio==1.3.1 \
     numexpr==2.14.1 \
     tables==3.10.2 \
@@ -453,87 +399,65 @@ pip install \
     xxhash==3.6.0 \
     lmdb==1.7.5 \
     patsy==1.0.1 \
-    ninja==1.11.1 \
     py-cpuinfo==9.0.0 \
-    ply==3.11 \
-    typing_extensions==4.15.0
+    ply==3.11
 
 echo "=========================================="
 echo "✅ Installation complete!"
 echo "=========================================="
-echo "Activate environment: conda activate securemamba"
-echo "Run verification: python verify.py"
+echo "Activate: conda activate securemamba"
+echo "Verify:   python verify.py"
 ```
 
 Run the script:
 
 ```bash
-chmod +x install_all_batches.sh
-./install_all_batches.sh
+chmod +x install_all.sh
+./install_all.sh
 ```
 
 ---
 
 ## Verification
 
-### Quick Check
-
-```bash
-conda activate securemamba
-python -c "import torch; print('CUDA:', torch.cuda.is_available())"
-```
-
-### Complete Verification Script
-
-Save as `verify_all.py`:
+Save as `verify.py`:
 
 ```python
 #!/usr/bin/env python3
-"""Verify all SecureMamba packages are installed"""
+"""Complete environment verification for SecureMamba"""
 
 import sys
 
-def verify():
-    print("=" * 60)
-    print("SecureMamba Package Verification")
-    print("=" * 60)
+def main():
+    print("=" * 50)
+    print("SecureMamba Verification")
+    print("=" * 50)
     
     packages = {
-        # Core
         "torch": "torch",
-        "torchvision": "torchvision", 
+        "torchvision": "torchvision",
         "torchaudio": "torchaudio",
-        
-        # ML/NLP
         "transformers": "transformers",
         "datasets": "datasets",
         "huggingface_hub": "huggingface_hub",
         "accelerate": "accelerate",
         "einops": "einops",
-        
-        # Mamba
         "mamba_ssm": "mamba_ssm",
         "causal_conv1d": "causal_conv1d",
-        
-        # Scientific
         "numpy": "numpy",
         "scipy": "scipy",
         "pandas": "pandas",
         "matplotlib": "matplotlib",
         "seaborn": "seaborn",
-        "scikit_learn": "sklearn",
+        "sklearn": "sklearn",
         "statsmodels": "statsmodels",
-        "biopython": "Bio",
+        "Bio": "Bio",
         "numba": "numba",
-        "sympy": "sympy",
-        
-        # Utils
         "tqdm": "tqdm",
-        "pyyaml": "yaml",
+        "yaml": "yaml",
         "requests": "requests",
-        "pillow": "PIL",
         "aiohttp": "aiohttp",
-        "umap_learn": "umap",
+        "umap": "umap",
         "tables": "tables",
         "pyarrow": "pyarrow",
     }
@@ -548,35 +472,33 @@ def verify():
             print(f"✗ {name}: NOT FOUND")
             failed.append(name)
     
-    # CUDA check
     print("\n--- CUDA ---")
     try:
         import torch
         print(f"CUDA available: {torch.cuda.is_available()}")
         if torch.cuda.is_available():
             print(f"CUDA version: {torch.version.cuda}")
-            print(f"GPU: {torch.cuda.get_device_name(0)}")
     except:
         print("CUDA check failed")
     
     print("\n--- Summary ---")
     if failed:
-        print(f"❌ Failed packages: {', '.join(failed)}")
+        print(f"❌ Failed: {', '.join(failed)}")
     else:
         print("✅ All packages verified!")
     
-    print("=" * 60)
+    print("=" * 50)
     return len(failed) == 0
 
 if __name__ == "__main__":
-    sys.exit(0 if verify() else 1)
+    sys.exit(0 if main() else 1)
 ```
 
-Run:
+Run verification:
 
 ```bash
 conda activate securemamba
-python verify_all.py
+python verify.py
 ```
 
 ---
@@ -587,20 +509,12 @@ python verify_all.py
 
 **Fix:** Use batch installation instead of single YAML file.
 
-### Issue: Mamba-SSM fails to compile
+### Issue: Mamba-SSM installation fails
 
-**Fix 1:** Install pre-compiled wheels
-```bash
-# causal_conv1d Download from: https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-# mamba_ssm https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-pip install causal_conv1d-1.5.3+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-pip install mamba_ssm-2.2.6+cu118torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-```
+**Fix:** Use the pre-built wheels provided in Batch 15. Direct download links:
 
-**Fix 2:** Use conda-forge
-```bash
-conda install -c conda-forge mamba-ssm causal-conv1d
-```
+- [causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl](https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.5.3.post1/causal_conv1d-1.5.3.post1+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
+- [mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl](https://github.com/state-spaces/mamba/releases/download/v2.2.6.post3/mamba_ssm-2.2.6.post3+cu11torch2.5cxx11abiFALSE-cp311-cp311-linux_x86_64.whl)
 
 ### Issue: `libcudart.so` not found
 
@@ -628,12 +542,11 @@ custom_channels:
 EOF
 ```
 
-### Issue: CUDA out of memory during training
+### Issue: Hugging Face download slow (China users)
 
-```python
-# In config.py
-batch_size = 8  # Reduce from 16
-max_seq_length = 1024  # Reduce from 2048
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+echo 'export HF_ENDPOINT=https://hf-mirror.com' >> ~/.bashrc
 ```
 
 ---
@@ -677,6 +590,8 @@ SecureMamba/
 ├── config.py
 ├── main.py
 ├── predict.py
+├── install_all.sh
+├── verify.py
 └── [other source files]
 ```
 
@@ -703,5 +618,3 @@ python predict.py --fasta train_data/btx_test.fasta --model Model/best_nucleotid
 **Last Updated:** 2026  
 **Maintainer:** kosha316
 ```
-
----

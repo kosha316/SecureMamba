@@ -32,33 +32,6 @@ This guide provides a **batch-by-batch** installation method that installs **eve
 
 ---
 
-## Quick Installation (Mamba)
-
-**Fastest method** - uses mamba to install all packages at once:
-
-```bash
-# 1. Clone repository
-git clone https://github.com/kosha316/SecureMamba.git
-cd SecureMamba
-
-# 2. Install mamba
-conda activate base
-conda install mamba -c conda-forge -y
-
-# 3. Create environment with all packages
-mamba env create -f environment.yml
-
-# 4. Activate
-conda activate securemamba
-
-# 5. Verify
-python -c "import torch; print('CUDA:', torch.cuda.is_available())"
-```
-
-**If mamba also hangs**, use the **Batch Installation** below.
-
----
-
 ## Batch Installation (All Packages)
 
 This method installs **every package** in small batches to avoid dependency conflicts.

@@ -507,7 +507,13 @@ train_data/
 └── vfdb_test.fasta               # Virulence factor test set (16.9 MB)
 ```
 
-### Run Training
+### Run Pipeline
+
+For the first run, you need to use the "all" mode to execute the full process. And change config.py:
+ # ========== File Configuration ==========
+use_existing_variants = False  # Whether to use existing variant file
+variants_file_path = "results_nucleotide_v3_mamba/variants_data.pkl"  # Variant file path  change to the actual output directory
+output_dir = "results_nucleotide_v3_mamba"  # Output directory change to the actual output directory
 
 ```bash
 python main.py

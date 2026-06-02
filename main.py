@@ -5,6 +5,7 @@ Runs entirely through configuration file, no command-line arguments needed
 
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 import sys
 from datetime import datetime
 import pickle

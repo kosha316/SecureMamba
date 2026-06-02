@@ -5,7 +5,6 @@ Runs entirely through configuration file, no command-line arguments needed
 
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 import sys
 from datetime import datetime
 import pickle
@@ -319,7 +318,7 @@ def run_nucleotide_training(variants_data):
 
 def main():
     """Main function - runs entirely through configuration file"""
-    # os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+    # os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com' # Chinese users uncomment this line
     # Setup environment
     setup_environment()
 

@@ -511,6 +511,11 @@ train_data/
 
 For the first run, you need to use the "all" mode to execute the full process. And change config.py:
 ```bash
+ # ========== Data Configuration ==========
+ positive_fasta = "train_data/train_data_pos.fasta"  # Positive samples file change to the actual file path
+ negative_fasta = "train_data/train_data_neg.fasta"  # Negative samples file change to the actual file path
+ # ========== Run Mode Configuration ==========
+run_mode = "all"  # Run mode: "preprocess", "generate", "train", "all", "train-only"
  # ========== File Configuration ==========
 use_existing_variants = False  # Whether to use existing variant file
 variants_file_path = "results_nucleotide_v3_mamba/variants_data.pkl"  # Variant file path  change to the actual output directory

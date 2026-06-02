@@ -457,7 +457,7 @@ The pre-trained SecureMamba model weights are available on Zenodo:
 
 ```bash
 # Download model weights from Zenodo
-wget https://zenodo.org/record/20365513/files/best_nucleotide_v3_mamba_model.pth
+wget https://zenodo.org/records/20365513/files/best_full_model_model.pth
 ```
 
 Place the downloaded model file in the project root directory or specify the path in prediction commands.

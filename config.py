@@ -11,12 +11,12 @@ class Config:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Direct device specification
     
     # ========== Run Mode Configuration ==========
-    run_mode = "train"  # Run mode: "preprocess", "generate", "train", "all", "train-only"
+    run_mode = "all"  # Run mode: "preprocess", "generate", "train", "all", "train-only"
     
     # ========== File Configuration ==========
-    use_existing_variants = True  # Whether to use existing variant file
-    variants_file_path = "results_nucleotide_v3_mamba_ds/variants_data.pkl"  # Variant file path
-    output_dir = "results_nucleotide_v3_mamba_ds"  # Output directory
+    use_existing_variants = False  # Whether to use existing variant file
+    variants_file_path = "results_nucleotide_v3_mamba/variants_data.pkl"  # Variant file path
+    output_dir = "results_nucleotide_v3_mamba"  # Output directory
     
     # ========== Data Configuration ==========
     max_seq_length = 2048  # Maximum DNA sequence length ⚠️ Changed to 2048

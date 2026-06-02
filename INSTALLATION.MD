@@ -531,7 +531,7 @@ echo 'export HF_ENDPOINT=https://hf-mirror.com' >> ~/.bashrc
 
 ```bash
 mkdir -p Model
-wget -P Model/ https://zenodo.org/record/20365513/files/best_nucleotide_v3_mamba_model.pth
+wget -P Model/ https://zenodo.org/records/20365513/files/best_full_model_model.pth
 ```
 
 ### Datasets

@@ -517,7 +517,7 @@ For the first run, you need to use the "all" mode to execute the full process. A
  # ========== Run Mode Configuration ==========
 run_mode = "all"  # Run mode: "preprocess", "generate", "train", "all", "train-only"
  # ========== File Configuration ==========
-use_existing_variants = False  # Whether to use existing variant file
+use_existing_variants = False  # Whether to use existing variant file,  the first run must be set to False
 variants_file_path = "results_nucleotide_v3_mamba/variants_data.pkl"  # Variant file path  change to the actual output directory
 output_dir = "results_nucleotide_v3_mamba"  # Output directory change to the actual output directory
 ```

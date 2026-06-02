@@ -542,7 +542,7 @@ Set `run_mode` in `config.py`:
 ## Prediction
 
 ```bash
-python predict.py --fasta input.fasta --model best_model.pth --threshold 0.5
+python predict.py --fasta input.fasta --model best_model.pth --threshold 0.5 --output-dir results
 ```
 
 ### Parameters

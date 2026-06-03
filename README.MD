@@ -462,6 +462,14 @@ wget https://zenodo.org/records/20365513/files/best_full_model_model.pth
 
 Place the downloaded model file in the project root directory or specify the path in prediction commands.
 
+### NTv3 Base Model (Required)
+
+SecureMamba relies on the [**NTv3**](https://huggingface.co/InstaDeepAI/NTv3_8M_pre) pre-trained model (`InstaDeepAI/NTv3_8M_pre`) from Hugging Face.  
+This model is **not** included in the Zenodo weight file above and must be downloaded separately.
+
+> **Note:** The NTv3 base model (`InstaDeepAI/NTv3_8M_pre`) requires a Hugging Face access token.  
+> Run `huggingface-cli login` before first use. See [Hugging Face tokens](https://huggingface.co/settings/tokens).
+
 ---
 
 ## Installation

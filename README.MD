@@ -569,6 +569,14 @@ python predict.py --fasta input.fasta --model best_model.pth --threshold 0.5 --o
 python predict.py --fasta train_data/btx_test.fasta --model best_nucleotide_v3_mamba_model.pth --threshold 0.6 --output-dir ./results
 ```
 
+### Prediction by ID
+
+It is possible to calculate metrics such as accuracy for the entire sequence (which may be split into multiple fragments) based on the original sequence ID, and when the variant type is known, the accuracy for each variant type can be calculated.
+
+```bash
+python predict_id.py --fasta input.fasta --model best_model.pth --threshold 0.5 --output-dir results
+```
+
 ---
 
 ## Output Files
